@@ -8,7 +8,7 @@ Board definitions, build scripts, and firmware releases for novaX flight control
 
 | Board | MCU | IMU | Baro | Compass | GPS | Firmware |
 |-------|-----|-----|------|---------|-----|----------|
-| novaX_F405 | STM32F405 | ICM-42688-P | SPL06 | QMC5883P (ext) | MAX-M10S | ArduPilot |
+| novaX_F405 | STM32F405 | ICM-42688-P | SPL06 | QMC5883P (ext) | MAX-M10S | ArduPilot / Betaflight |
 | novaX_H743_V1 | STM32H743 | Dual ICM-42688-P | DPS310 | IST8310 (int) | - | ArduPilot / Betaflight |
 
 ## Repository Structure
@@ -20,6 +20,7 @@ Board definitions, build scripts, and firmware releases for novaX flight control
 ├── boards/
 │   ├── novaX_F405/
 │   │   ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
+│   │   ├── betaflight/         # config.h
 │   │   └── docs/               # Schematic
 │   └── novaX_H743_V1/
 │       ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
@@ -61,6 +62,7 @@ Bootloader is built automatically on first run if not present.
 cd firmware/betaflight && make arm_sdk_install && cd ../..
 
 # Build
+./scripts/build_bf.sh novaX_F405
 ./scripts/build_bf.sh novaX_H743_V1
 ```
 

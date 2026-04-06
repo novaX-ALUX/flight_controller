@@ -1,6 +1,7 @@
 board: novaX_F405
 platform:
   - ardupilot
+  - betaflight
 mcu: STM32F405xx
 bootloader_board_id: AP_HW_SPEEDYBEEF4V4
 source_tree: firmware/ardupilot

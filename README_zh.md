@@ -8,7 +8,7 @@ novaX 系列飞控的板级定义、构建脚本和固件发布产物。
 
 | 板卡 | MCU | IMU | 气压计 | 罗盘 | GPS | 固件 |
 |------|-----|-----|--------|------|-----|------|
-| novaX_F405 | STM32F405 | ICM-42688-P | SPL06 | QMC5883P (外置) | MAX-M10S | ArduPilot |
+| novaX_F405 | STM32F405 | ICM-42688-P | SPL06 | QMC5883P (外置) | MAX-M10S | ArduPilot / Betaflight |
 | novaX_H743_V1 | STM32H743 | 双 ICM-42688-P | DPS310 | IST8310 (内置) | - | ArduPilot / Betaflight |
 
 ## 目录结构
@@ -20,6 +20,7 @@ novaX 系列飞控的板级定义、构建脚本和固件发布产物。
 ├── boards/
 │   ├── novaX_F405/
 │   │   ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
+│   │   ├── betaflight/         # config.h
 │   │   └── docs/               # 原理图
 │   └── novaX_H743_V1/
 │       ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
@@ -61,6 +62,7 @@ cd flight_controller
 cd firmware/betaflight && make arm_sdk_install && cd ../..
 
 # 编译
+./scripts/build_bf.sh novaX_F405
 ./scripts/build_bf.sh novaX_H743_V1
 ```
 
