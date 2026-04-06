@@ -28,6 +28,14 @@ elif [[ ! -e "${BUILD_LINK}" ]]; then
 fi
 
 cd "${AP_ROOT}"
+
+# Build bootloader first if it doesn't exist (required for boards with custom Board ID)
+BL_BIN="${AP_ROOT}/Tools/bootloaders/${BOARD_NAME}_bl.bin"
+if [[ ! -f "${BL_BIN}" ]]; then
+    echo "Bootloader not found, building: ${BL_BIN}"
+    python3 Tools/scripts/build_bootloaders.py "${BOARD_NAME}"
+fi
+
 ./waf configure --board "${BOARD_NAME}"
 ./waf "${VEHICLE}"
 
