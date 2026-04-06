@@ -31,10 +31,11 @@ novaX 系列飞控的板级定义、构建脚本和固件发布产物。
 │   ├── build_ap.sh             # 配置 + 编译 + 打包 (ArduPilot)
 │   ├── build_bf.sh             # 编译 + 打包 (Betaflight)
 │   └── package_fw.sh           # 收集固件产物到 releases/
-└── releases/
-    └── <board>/
-        ├── ardupilot/          # .apj, .hex, bootloader
-        └── betaflight/         # .hex, .bin
+├── releases/                   # 本地编译产物（已 gitignore）
+│   └── <board>/
+│       ├── ardupilot/          # .apj, .hex, bootloader
+│       └── betaflight/         # .hex, .bin
+└── GitHub Releases             # 发布的固件压缩包
 ```
 
 ## 快速开始
@@ -76,6 +77,13 @@ ls releases/novaX_F405/ardupilot/
 
 ls releases/novaX_H743_V1/betaflight/
 # betaflight_novaX_H743_V1.hex  ...
+```
+
+## 发布固件
+
+```bash
+# 创建 GitHub Release，自动打包所有板卡固件为 zip
+./scripts/release.sh v1.0.0
 ```
 
 ## 烧录方式

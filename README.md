@@ -31,10 +31,11 @@ Board definitions, build scripts, and firmware releases for novaX flight control
 │   ├── build_ap.sh             # Configure + build + package (ArduPilot)
 │   ├── build_bf.sh             # Build + package (Betaflight)
 │   └── package_fw.sh           # Collect firmware artifacts into releases/
-└── releases/
-    └── <board>/
-        ├── ardupilot/          # .apj, .hex, bootloader
-        └── betaflight/         # .hex, .bin
+├── releases/                   # Local build output (gitignored)
+│   └── <board>/
+│       ├── ardupilot/          # .apj, .hex, bootloader
+│       └── betaflight/         # .hex, .bin
+└── GitHub Releases             # Published firmware zips
 ```
 
 ## Getting Started
@@ -76,6 +77,13 @@ ls releases/novaX_F405/ardupilot/
 
 ls releases/novaX_H743_V1/betaflight/
 # betaflight_novaX_H743_V1.hex  ...
+```
+
+## Publishing a Release
+
+```bash
+# Create a GitHub Release with firmware zips for all boards
+./scripts/release.sh v1.0.0
 ```
 
 ## Flashing
