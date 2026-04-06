@@ -1,0 +1,32 @@
+board: novax_H743_V1
+platform:
+  - ardupilot
+  - betaflight
+mcu: STM32H743xx
+package: TFBGA-100
+bootloader_board_id: 6200
+source_tree: firmware/ardupilot
+board_config: boards/novax_H743_V1/ardupilot
+sensors:
+  imu1: ICM-42688-P
+  imu2: ICM-42688-P
+  barometer: DPS310
+  compass: IST8310
+  osd: AT7456E
+can:
+  fdcan1: TJA1051TK/3
+ports:
+  serial1: VTX (SmartAudio)
+  serial2: DJI O3 (SBUS RC)
+  serial3: ELRS Receiver
+  serial4: DJI O3 MSP
+  serial6: GPS
+  serial7: Spare
+  serial8: Spare
+i2c:
+  bus0_internal:
+    - DPS310
+    - IST8310
+  bus1_external:
+    - GPS/Compass connector
+motor_outputs: 10
