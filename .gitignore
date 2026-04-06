@@ -1,6 +1,3 @@
-# ArduPilot source tree (cloned separately)
-/firmware/
-
 # Build intermediates and symlinks
 /build/
 
