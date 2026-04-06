@@ -1,52 +1,100 @@
 # novaX Flight Controller
 
-novaX 系列飞控的板级定义、固件构建脚本和发布产物。
+[中文版](README_zh.md)
 
-## 支持的板卡
+Board definitions, build scripts, and firmware releases for novaX flight controllers.
 
-| 板卡 | MCU | IMU | 气压计 | 罗盘 | GPS | 固件 |
-|------|-----|-----|--------|------|-----|------|
-| novaX_F405 | STM32F405 | ICM-42688-P | SPL06 | QMC5883P (外置) | MAX-M10S | ArduPilot |
-| novaX_H743_V1 | STM32H743 | Dual ICM-42688-P | DPS310 | IST8310 (内置) | - | ArduPilot / Betaflight |
+## Supported Boards
 
-## 目录结构
+| Board | MCU | IMU | Baro | Compass | GPS | Firmware |
+|-------|-----|-----|------|---------|-----|----------|
+| novaX_F405 | STM32F405 | ICM-42688-P | SPL06 | QMC5883P (ext) | MAX-M10S | ArduPilot |
+| novaX_H743_V1 | STM32H743 | Dual ICM-42688-P | DPS310 | IST8310 (int) | - | ArduPilot / Betaflight |
+
+## Repository Structure
 
 ```
 ├── firmware/
-│   ├── ardupilot/              # ArduPilot 源码 (git submodule)
-│   └── betaflight/             # Betaflight 源码 (git submodule)
+│   ├── ardupilot/              # ArduPilot source (git submodule)
+│   └── betaflight/             # Betaflight source (git submodule)
 ├── boards/
 │   ├── novaX_F405/
 │   │   ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
-│   │   └── docs/               # 原理图
+│   │   └── docs/               # Schematic
 │   └── novaX_H743_V1/
 │       ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
 │       ├── betaflight/         # config.h
-│       └── docs/               # 原理图
+│       └── docs/               # Schematic
 ├── scripts/
-│   ├── sync_ap_board.sh        # 将板级定义软链到 AP 源码树
-│   ├── build_ap.sh             # 配置 + 编译 + 打包
-│   └── package_fw.sh           # 收集固件产物到 releases/
+│   ├── sync_ap_board.sh        # Symlink board config into AP source tree
+│   ├── build_ap.sh             # Configure + build + package (ArduPilot)
+│   ├── build_bf.sh             # Build + package (Betaflight)
+│   └── package_fw.sh           # Collect firmware artifacts into releases/
 └── releases/
-    └── <board>/ardupilot/      # 编译产物 (.apj, .hex, bootloader)
+    └── <board>/
+        ├── ardupilot/          # .apj, .hex, bootloader
+        └── betaflight/         # .hex, .bin
 ```
 
-## 快速开始
+## Getting Started
+
+### Clone
 
 ```bash
-# 克隆（含固件源码）
 git clone --recurse-submodules --shallow-submodules https://github.com/novaX-ALUX/flight_controller.git
-
-# 编译 ArduPilot
-./scripts/build_ap.sh novaX_F405 copter
-./scripts/build_ap.sh novaX_H743_V1 copter
-
-# 产物
-ls releases/<board>/ardupilot/
+cd flight_controller
 ```
 
-## 工作流
+### Build ArduPilot
 
-- 板级定义在 `boards/` 下维护，不直接修改固件源码
-- `sync_ap_board.sh` 通过相对路径软链将板级定义挂载到 AP 源码树
-- 更新固件源码：`cd firmware/ardupilot && git pull`，板级配置不受影响
+```bash
+./scripts/build_ap.sh novaX_F405 copter
+./scripts/build_ap.sh novaX_H743_V1 copter
+```
+
+Bootloader is built automatically on first run if not present.
+
+### Build Betaflight
+
+```bash
+# Install ARM toolchain (one-time, requires GCC 13.3.1)
+cd firmware/betaflight && make arm_sdk_install && cd ../..
+
+# Build
+./scripts/build_bf.sh novaX_H743_V1
+```
+
+### Output
+
+Firmware artifacts are collected in `releases/<board>/`:
+
+```bash
+ls releases/novaX_F405/ardupilot/
+# arducopter.apj  arducopter_with_bl.hex  novaX_F405_bl.bin  ...
+
+ls releases/novaX_H743_V1/betaflight/
+# betaflight_novaX_H743_V1.hex  ...
+```
+
+## Flashing
+
+| Method | File | When |
+|--------|------|------|
+| STLink / DFU | `*_with_bl.hex` | First flash (includes bootloader) |
+| Mission Planner | `.apj` | ArduPilot OTA update |
+| BF Configurator | `.hex` | Betaflight update |
+
+## How It Works
+
+Board definitions live in `boards/`, separate from firmware source. The `sync_ap_board.sh` script creates relative symlinks into the ArduPilot source tree so the build system can find them.
+
+Updating firmware source is independent of board configs:
+
+```bash
+cd firmware/ardupilot && git pull
+```
+
+## License
+
+Hardware design files are proprietary to novaX-ALUX.
+Firmware definitions follow their respective upstream licenses (GPLv3).
