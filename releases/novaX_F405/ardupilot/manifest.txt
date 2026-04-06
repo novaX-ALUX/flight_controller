@@ -1,8 +1,9 @@
 board=novaX_F405
 vehicle=copter
-source_tree=/home/patrick/ALUX/novaX/flight_controller/firmware/ardupilot
-board_config=/home/patrick/ALUX/novaX/flight_controller/boards/novaX_F405/ardupilot
-generated_at=2026-04-03T17:58:16+08:00
+source_tree=firmware/ardupilot
+board_config=boards/novaX_F405/ardupilot
+ap_commit=3e40de5
+generated_at=2026-04-06T20:41:53+08:00
 files:
   arducopter.apj
   arducopter_with_bl.hex
