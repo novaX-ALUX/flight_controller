@@ -30,16 +30,13 @@ fi
 cd "${BF_ROOT}"
 make CONFIG="${BOARD_NAME}"
 
-# Package
+# Package - BF output names include version and MCU, use glob to find them
 mkdir -p "${RELEASE_DIR}"
-BF_HEX="${BF_ROOT}/obj/main/betaflight_${BOARD_NAME}.hex"
-BF_BIN="${BF_ROOT}/obj/main/betaflight_${BOARD_NAME}.bin"
 
-if [[ -f "${BF_HEX}" ]]; then
-    cp -f "${BF_HEX}" "${RELEASE_DIR}/"
-fi
-if [[ -f "${BF_BIN}" ]]; then
-    cp -f "${BF_BIN}" "${RELEASE_DIR}/"
-fi
+for f in "${BF_ROOT}"/obj/betaflight_*_"${BOARD_NAME}".hex "${BF_ROOT}"/obj/betaflight_*_"${BOARD_NAME}".bin; do
+    if [[ -f "${f}" ]]; then
+        cp -f "${f}" "${RELEASE_DIR}/"
+    fi
+done
 
 echo "Betaflight build outputs in ${RELEASE_DIR}"
