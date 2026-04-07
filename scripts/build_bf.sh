@@ -20,11 +20,18 @@ cp -f "${BOARD_BF_DIR}/config.h" "${BF_CONFIG_DIR}/config.h"
 echo "Synced ${BOARD_NAME} Betaflight config"
 
 # Install ARM SDK if not present
-ARM_SDK_BIN="${BF_ROOT}/tools/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi/bin/arm-none-eabi-gcc"
+ARM_SDK_DIR="${BF_ROOT}/tools/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi"
+ARM_SDK_BIN="${ARM_SDK_DIR}/bin/arm-none-eabi-gcc"
 if [[ ! -f "${ARM_SDK_BIN}" ]]; then
-    echo "ARM SDK not found, run: make arm_sdk_install (in firmware/betaflight/)"
-    echo "Or download manually and extract to: ${BF_ROOT}/tools/"
-    exit 1
+    ARM_SDK_URL="https://developer.arm.com/-/media/Files/downloads/gnu/13.3.rel1/binrel/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi.tar.xz"
+    ARM_SDK_FILE="${BF_ROOT}/tools/arm-sdk.tar.xz"
+    echo "ARM SDK not found, downloading..."
+    mkdir -p "${BF_ROOT}/tools"
+    curl -L -o "${ARM_SDK_FILE}" "${ARM_SDK_URL}"
+    echo "Extracting..."
+    tar xf "${ARM_SDK_FILE}" -C "${BF_ROOT}/tools/"
+    rm -f "${ARM_SDK_FILE}"
+    echo "ARM SDK installed"
 fi
 
 cd "${BF_ROOT}"
