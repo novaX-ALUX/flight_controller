@@ -10,7 +10,7 @@ board_config: boards/novax_H743_V1/ardupilot
 sensors:
   imu1: ICM-42688-P
   imu2: ICM-42688-P
-  barometer: DPS310
+  barometer: DPS310 / SPA06-003
   compass: IST8310
   osd: AT7456E
 can:
@@ -26,6 +26,7 @@ ports:
 i2c:
   bus0_internal:
     - DPS310
+    - SPA06-003
     - IST8310
   bus1_external:
     - GPS/Compass connector

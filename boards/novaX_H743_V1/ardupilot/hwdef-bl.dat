@@ -9,7 +9,9 @@ APJ_BOARD_ID 6200
 
 OSCILLATOR_HZ 8000000
 FLASH_SIZE_KB 2048
-FLASH_BOOTLOADER_LOAD_KB 128
+# H743 internal flash uses 128KB sectors. Keep sector 0 for the bootloader,
+# sectors 1-2 for parameter storage, and load the application from sector 3.
+FLASH_BOOTLOADER_LOAD_KB 384
 FLASH_RESERVE_START_KB 0
 
 env OPTIMIZE -Os
@@ -23,7 +25,8 @@ USB_STRING_PRODUCT "novax_H743_V1-BL"
 
 # ---- Bootloader LED ----
 PE3 LED_BOOTLOADER OUTPUT LOW
-define HAL_LED_ON 0
+PE4 LED_ACTIVITY   OUTPUT LOW
+define HAL_LED_ON 1
 
 # ---- SPI CS Pins held HIGH (prevent bus contention) ----
 PC15 IMU1_CS    OUTPUT HIGH

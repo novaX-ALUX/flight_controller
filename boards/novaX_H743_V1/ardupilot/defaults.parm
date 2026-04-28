@@ -1,3 +1,7 @@
+# ---- Frame ----
+FRAME_CLASS 1
+FRAME_TYPE 1
+
 # ---- Battery 1 ----
 BATT_MONITOR 4
 BATT_VOLT_PIN 10

@@ -3,7 +3,7 @@
 # =============================================================================
 # MCU:  STM32H743VIH6 (TFBGA-100, 480MHz)
 # IMU:  Dual ICM-42688-P (SPI1 + SPI4)
-# BARO: DPS310 (I2C)
+# BARO: DPS310 or SPA06-003 (I2C)
 # MAG:  IST8310 (I2C)
 # OSD:  AT7456E (SPI2)
 # CAN:  TJA1051TK/3 transceiver
@@ -19,10 +19,12 @@ APJ_BOARD_ID 6200
 OSCILLATOR_HZ 8000000
 
 FLASH_SIZE_KB 2048
-FLASH_RESERVE_START_KB 128
-FLASH_BOOTLOADER_LOAD_KB 128
+# H743 uses 128KB flash sectors. Sector 0 is bootloader, sectors 1-2 are
+# reserved for parameter storage, and the application starts at sector 3.
+FLASH_RESERVE_START_KB 384
+FLASH_BOOTLOADER_LOAD_KB 384
 
-env OPTIMIZE -O2
+env OPTIMIZE -Os
 
 # ChibiOS system timer (default TIM5 is used for motors)
 STM32_ST_USE_TIMER 2
@@ -34,11 +36,14 @@ PA12 OTG_FS_DP OTG1
 USB_STRING_MANUFACTURER "NovaX"
 USB_STRING_PRODUCT "novaX_H743_V1"
 
-define HAL_HAVE_DUAL_USB_CDC 1
-
 # ---- LEDs ----
-PE3 LED_BOOTLOADER OUTPUT LOW
-PE4 LED_ACTIVITY   OUTPUT LOW
+# Schematic/Betaflight: LED0 is on PE3, LED1 is on PE4. Both are active-high.
+PE3 LED0 OUTPUT LOW GPIO(90)
+PE4 LED1 OUTPUT LOW GPIO(91)
+define HAL_GPIO_A_LED_PIN 91
+define HAL_GPIO_B_LED_PIN 90
+define HAL_GPIO_LED_ON 1
+define AP_NOTIFY_GPIO_LED_2_ENABLED 1
 
 # ---- Buzzer (through SS8050 NPN transistor) ----
 PA15 BUZZER OUTPUT GPIO(32) LOW
@@ -79,6 +84,8 @@ PB9  UART4_TX  UART4
 PB8  UART4_RX  UART4
 
 # SERIAL6 - GPS
+# PC7 can expose TIM3_CH2 electrically, but TIM3 is already used by motor outputs.
+# Keep it as USART6 RX so GPS/serial startup and motor PWM can coexist.
 PC6  USART6_TX USART6
 PC7  USART6_RX USART6
 
@@ -130,8 +137,8 @@ SPIDEV osd         SPI2 DEVID1 AT7456E_CS MODE0 10*MHZ 10*MHZ
 # IMU
 # =============================================================================
 
-IMU Invensensev3 SPI:icm42688_1 ROTATION_NONE
-IMU Invensensev3 SPI:icm42688_2 ROTATION_NONE
+IMU Invensensev3 SPI:icm42688_1 ROTATION_YAW_270
+IMU Invensensev3 SPI:icm42688_2 ROTATION_YAW_270
 
 # fast sampling on both IMUs (bit0=IMU1, bit1=IMU2)
 define HAL_DEFAULT_INS_FAST_SAMPLE 3
@@ -143,7 +150,7 @@ PE15 GYRO2_EXTI INPUT
 # =============================================================================
 # I2C Buses
 # =============================================================================
-# Bus 0 = I2C2 (onboard sensors: DPS310 baro + IST8310 compass)
+# Bus 0 = I2C2 (onboard sensors: DPS310/SPA06-003 baro + IST8310 compass)
 # Bus 1 = I2C1 (external: GPS/Compass connector P3)
 
 I2C_ORDER I2C2 I2C1
@@ -157,10 +164,12 @@ PB7  I2C1_SDA I2C1
 define HAL_I2C_INTERNAL_MASK 1
 
 # =============================================================================
-# Barometer - DPS310 on I2C bus 0 (SDO→GND = address 0x76)
+# Barometer - DPS310 or SPA06-003 on I2C bus 0 (address 0x76)
 # =============================================================================
 
 BARO DPS310 I2C:0:0x76
+BARO SPL06  I2C:0:0x76
+define AP_BARO_SPL06_ENABLED 1
 
 # =============================================================================
 # Compass - IST8310 on I2C bus 0 (address 0x0E)
@@ -213,7 +222,7 @@ PC1  BATT_CURRENT_SENS  ADC1 SCALE(1)
 PA4  BATT2_VOLTAGE_SENS ADC1 SCALE(1)
 PA7  BATT2_CURRENT_SENS ADC1 SCALE(1)
 PC5  RSSI_ADC_PIN       ADC1 SCALE(1)
-PC4  PRESSURE_SENS      ADC1 SCALE(1)
+PC4  AIRSPEED_SENS      ADC1 SCALE(1)
 
 # ADC channel numbers (STM32H743 ADC input mapping)
 # PC0=CH10, PC1=CH11, PA4=CH18, PA7=CH7, PC5=CH8, PC4=CH4
@@ -222,11 +231,14 @@ define HAL_BATT_CURR_PIN  11
 define HAL_BATT2_VOLT_PIN 18
 define HAL_BATT2_CURR_PIN 7
 define BOARD_RSSI_ANA_PIN 8
+define HAL_DEFAULT_AIRSPEED_PIN 4
 
 # TODO: 根据实际分压电阻值调整 SCALE
 # R14=10K, R24=1K → (10K+1K)/1K = 11.0
 define HAL_BATT_VOLT_SCALE 11.0
 define HAL_BATT_CURR_SCALE 40.0
+define HAL_BATT2_VOLT_SCALE 11.0
+define HAL_BATT2_CURR_SCALE 40.0
 define HAL_BATT_MONITOR_DEFAULT 4
 
 # =============================================================================
@@ -274,7 +286,8 @@ DMA_NOSHARE  SPI1* SPI4*
 # Storage
 # =============================================================================
 
-define HAL_STORAGE_SIZE 32768
+define HAL_STORAGE_SIZE 16384
+define STORAGE_FLASH_PAGE 1
 define HAL_WITH_RAMTRON  0
 
 # =============================================================================
