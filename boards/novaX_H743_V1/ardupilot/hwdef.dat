@@ -175,7 +175,7 @@ define AP_BARO_SPL06_ENABLED 1
 # Compass - IST8310 on I2C bus 0 (address 0x0E)
 # =============================================================================
 
-define AP_COMPASS_PROBING_ENABLED 1
+define HAL_PROBE_EXTERNAL_I2C_COMPASSES
 COMPASS IST8310 I2C:0:0x0E false ROTATION_NONE
 
 # =============================================================================
@@ -233,8 +233,7 @@ define HAL_BATT2_CURR_PIN 7
 define BOARD_RSSI_ANA_PIN 8
 define HAL_DEFAULT_AIRSPEED_PIN 4
 
-# TODO: 根据实际分压电阻值调整 SCALE
-# R14=10K, R24=1K → (10K+1K)/1K = 11.0
+# Verified divider: R14=10K, R24=1K -> (10K+1K)/1K = 11.0
 define HAL_BATT_VOLT_SCALE 11.0
 define HAL_BATT_CURR_SCALE 40.0
 define HAL_BATT2_VOLT_SCALE 11.0
