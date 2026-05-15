@@ -1,6 +1,6 @@
 # novaX Flight Controller
 
-[中文版](README_zh.md)
+[한국어](README_ko.md) | [中文](README_zh.md) | [日本語](README_ja.md)
 
 Board definitions, build scripts, and firmware releases for novaX flight controllers.
 

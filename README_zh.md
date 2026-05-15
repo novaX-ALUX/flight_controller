@@ -1,6 +1,6 @@
 # novaX 飞控
 
-[English](README.md)
+[English](README.md) | [한국어](README_ko.md) | [日本語](README_ja.md)
 
 novaX 系列飞控的板级定义、构建脚本和固件发布产物。
 
