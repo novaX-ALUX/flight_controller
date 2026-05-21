@@ -1,5 +1,5 @@
 # hw definition file for processing by chibios_hwdef.py
-# for novaX_F405 hardware (novaX F405-8S flight controller)
+# for AF-F4_nano hardware (AF-F4 nano flight controller)
 # Based on SpeedyBee F405 V4 with a MAX-M10S GPS and QMC5883P compass on P3
 
 # MCU class and specific type

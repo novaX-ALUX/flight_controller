@@ -1,5 +1,5 @@
 # =============================================================================
-# novax_H743_V1 Bootloader - Hardware Definition for ArduPilot
+# AF-H7 nano Bootloader - Hardware Definition for ArduPilot
 # =============================================================================
 
 # ---- MCU & Board ----
@@ -21,7 +21,7 @@ PA11 OTG_FS_DM OTG1
 PA12 OTG_FS_DP OTG1
 
 USB_STRING_MANUFACTURER "NovaX"
-USB_STRING_PRODUCT "novax_H743_V1-BL"
+USB_STRING_PRODUCT "AF-H7 nano-BL"
 
 # ---- Bootloader LED ----
 PE3 LED_BOOTLOADER OUTPUT LOW

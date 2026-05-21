@@ -1,6 +1,6 @@
-# novaX_F405 ArduPilot Board Config
+# AF-F4 nano ArduPilot Board Config
 
-This directory is the single source of truth for the `novaX_F405` ArduPilot board definition.
+This directory is the single source of truth for the `AF-F4_nano` ArduPilot board definition.
 
 Key hardware mapping:
 
@@ -20,6 +20,6 @@ Layout:
 
 Build flow:
 
-1. Run `scripts/sync_ap_board.sh novaX_F405`
-2. Run `scripts/build_ap.sh novaX_F405 copter`
-3. Collect release artifacts from `releases/novaX_F405/ardupilot/`
+1. Run `scripts/sync_ap_board.sh AF-F4_nano`
+2. Run `scripts/build_ap.sh AF-F4_nano copter`
+3. Collect release artifacts from `releases/AF-F4_nano/ardupilot/`

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BOARD_NAME="${1:-novaX_H743_V1}"
+BOARD_NAME="${1:-AF-H7_nano}"
 
 BF_ROOT="${ROOT_DIR}/firmware/betaflight"
 BOARD_BF_DIR="${ROOT_DIR}/boards/${BOARD_NAME}/betaflight"

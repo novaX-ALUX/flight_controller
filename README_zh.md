@@ -8,8 +8,8 @@ novaX 系列飞控的板级定义、构建脚本和固件发布产物。
 
 | 板卡 | MCU | IMU | 气压计 | 罗盘 | GPS | 固件 |
 |------|-----|-----|--------|------|-----|------|
-| novaX_F405 | STM32F405 | ICM-42688-P | SPL06 | QMC5883P (外置) | MAX-M10S | ArduPilot / Betaflight |
-| novaX_H743_V1 | STM32H743 | 双 ICM-42688-P | DPS310 | IST8310 (内置) | - | ArduPilot / Betaflight |
+| AF-F4 nano | STM32F405 | ICM-42688-P | SPL06 | QMC5883P (外置) | MAX-M10S | ArduPilot / Betaflight |
+| AF-H7 nano | STM32H743 | 双 ICM-42688-P | DPS310 | IST8310 (内置) | - | ArduPilot / Betaflight |
 
 ## 目录结构
 
@@ -18,11 +18,11 @@ novaX 系列飞控的板级定义、构建脚本和固件发布产物。
 │   ├── ardupilot/              # ArduPilot 源码 (git submodule)
 │   └── betaflight/             # Betaflight 源码 (git submodule)
 ├── boards/
-│   ├── novaX_F405/
+│   ├── AF-F4_nano/
 │   │   ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
 │   │   ├── betaflight/         # config.h
 │   │   └── docs/               # 原理图
-│   └── novaX_H743_V1/
+│   └── AF-H7_nano/
 │       ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
 │       ├── betaflight/         # config.h
 │       └── docs/               # 原理图
@@ -50,8 +50,8 @@ cd flight_controller
 ### 编译 ArduPilot
 
 ```bash
-./scripts/build_ap.sh novaX_F405 copter
-./scripts/build_ap.sh novaX_H743_V1 copter
+./scripts/build_ap.sh AF-F4_nano copter
+./scripts/build_ap.sh AF-H7_nano copter
 ```
 
 首次编译时 bootloader 会自动构建。
@@ -63,8 +63,8 @@ cd flight_controller
 cd firmware/betaflight && make arm_sdk_install && cd ../..
 
 # 编译
-./scripts/build_bf.sh novaX_F405
-./scripts/build_bf.sh novaX_H743_V1
+./scripts/build_bf.sh AF-F4_nano
+./scripts/build_bf.sh AF-H7_nano
 ```
 
 ### 产物
@@ -72,11 +72,11 @@ cd firmware/betaflight && make arm_sdk_install && cd ../..
 固件产物收集在 `releases/<board>/` 下：
 
 ```bash
-ls releases/novaX_F405/ardupilot/
-# arducopter.apj  arducopter_with_bl.hex  novaX_F405_bl.bin  ...
+ls releases/AF-F4_nano/ardupilot/
+# arducopter.apj  arducopter_with_bl.hex  AF-F4_nano_bl.bin  ...
 
-ls releases/novaX_H743_V1/betaflight/
-# betaflight_novaX_H743_V1.hex  ...
+ls releases/AF-H7_nano/betaflight/
+# betaflight_AF-H7_nano.hex  ...
 ```
 
 ## 发布固件

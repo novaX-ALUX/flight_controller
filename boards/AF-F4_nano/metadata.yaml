@@ -1,11 +1,11 @@
-board: novaX_F405
+board: AF-F4_nano
 platform:
   - ardupilot
   - betaflight
 mcu: STM32F405xx
 bootloader_board_id: AP_HW_SPEEDYBEEF4V4
 source_tree: firmware/ardupilot
-board_config: boards/novaX_F405/ardupilot
+board_config: boards/AF-F4_nano/ardupilot
 sensors:
   imu: Invensensev3
   barometer: SPL06

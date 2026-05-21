@@ -23,7 +23,7 @@
 
 #define FC_TARGET_MCU     STM32H743
 
-#define BOARD_NAME        novax_H743_V1
+#define BOARD_NAME        AF-H7_nano
 #define MANUFACTURER_ID   NOVX
 
 #define USE_ACC

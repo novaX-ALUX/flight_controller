@@ -23,7 +23,7 @@
 
 #define FC_TARGET_MCU     STM32F405
 
-#define BOARD_NAME        novaX_F405
+#define BOARD_NAME        AF-F4_nano
 #define MANUFACTURER_ID   NOVX
 
 #define USE_ACC

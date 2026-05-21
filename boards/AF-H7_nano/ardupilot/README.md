@@ -1,6 +1,6 @@
-# novax_H743_V1 ArduPilot Board Config
+# AF-H7 nano ArduPilot Board Config
 
-Board definition for the novax H743 V1 flight controller.
+Board definition for the AF-H7 nano flight controller.
 
 Key hardware mapping:
 
@@ -22,5 +22,5 @@ Layout:
 Build:
 
 ```bash
-scripts/build_ap.sh novax_H743_V1 copter
+scripts/build_ap.sh AF-H7_nano copter
 ```

@@ -8,8 +8,8 @@ Board definitions, build scripts, and firmware releases for novaX flight control
 
 | Board | MCU | IMU | Baro | Compass | GPS | Firmware |
 |-------|-----|-----|------|---------|-----|----------|
-| novaX_F405 | STM32F405 | ICM-42688-P | SPL06 | QMC5883P (ext) | MAX-M10S | ArduPilot / Betaflight |
-| novaX_H743_V1 | STM32H743 | Dual ICM-42688-P | DPS310 | IST8310 (int) | - | ArduPilot / Betaflight |
+| AF-F4 nano | STM32F405 | ICM-42688-P | SPL06 | QMC5883P (ext) | MAX-M10S | ArduPilot / Betaflight |
+| AF-H7 nano | STM32H743 | Dual ICM-42688-P | DPS310 | IST8310 (int) | - | ArduPilot / Betaflight |
 
 ## Repository Structure
 
@@ -18,11 +18,11 @@ Board definitions, build scripts, and firmware releases for novaX flight control
 │   ├── ardupilot/              # ArduPilot source (git submodule)
 │   └── betaflight/             # Betaflight source (git submodule)
 ├── boards/
-│   ├── novaX_F405/
+│   ├── AF-F4_nano/
 │   │   ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
 │   │   ├── betaflight/         # config.h
 │   │   └── docs/               # Schematic
-│   └── novaX_H743_V1/
+│   └── AF-H7_nano/
 │       ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
 │       ├── betaflight/         # config.h
 │       └── docs/               # Schematic
@@ -50,8 +50,8 @@ cd flight_controller
 ### Build ArduPilot
 
 ```bash
-./scripts/build_ap.sh novaX_F405 copter
-./scripts/build_ap.sh novaX_H743_V1 copter
+./scripts/build_ap.sh AF-F4_nano copter
+./scripts/build_ap.sh AF-H7_nano copter
 ```
 
 Bootloader is built automatically on first run if not present.
@@ -63,8 +63,8 @@ Bootloader is built automatically on first run if not present.
 cd firmware/betaflight && make arm_sdk_install && cd ../..
 
 # Build
-./scripts/build_bf.sh novaX_F405
-./scripts/build_bf.sh novaX_H743_V1
+./scripts/build_bf.sh AF-F4_nano
+./scripts/build_bf.sh AF-H7_nano
 ```
 
 ### Output
@@ -72,11 +72,11 @@ cd firmware/betaflight && make arm_sdk_install && cd ../..
 Firmware artifacts are collected in `releases/<board>/`:
 
 ```bash
-ls releases/novaX_F405/ardupilot/
-# arducopter.apj  arducopter_with_bl.hex  novaX_F405_bl.bin  ...
+ls releases/AF-F4_nano/ardupilot/
+# arducopter.apj  arducopter_with_bl.hex  AF-F4_nano_bl.bin  ...
 
-ls releases/novaX_H743_V1/betaflight/
-# betaflight_novaX_H743_V1.hex  ...
+ls releases/AF-H7_nano/betaflight/
+# betaflight_AF-H7_nano.hex  ...
 ```
 
 ## Publishing a Release

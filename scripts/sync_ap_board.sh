@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BOARD_NAME="${1:-novaX_F405}"
+BOARD_NAME="${1:-AF-F4_nano}"
 
 BOARD_CONFIG_DIR="${ROOT_DIR}/boards/${BOARD_NAME}/ardupilot"
 BOARD_INCLUDE_LINK="${ROOT_DIR}/boards/${BOARD_NAME}/include"

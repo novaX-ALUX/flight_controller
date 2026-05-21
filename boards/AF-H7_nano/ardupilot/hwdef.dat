@@ -1,5 +1,5 @@
 # =============================================================================
-# novaX_H743_V1 Flight Controller - Hardware Definition for ArduPilot
+# AF-H7 nano Flight Controller - Hardware Definition for ArduPilot
 # =============================================================================
 # MCU:  STM32H743VIH6 (TFBGA-100, 480MHz)
 # IMU:  Dual ICM-42688-P (SPI1 + SPI4)
@@ -34,7 +34,7 @@ PA11 OTG_FS_DM OTG1
 PA12 OTG_FS_DP OTG1
 
 USB_STRING_MANUFACTURER "NovaX"
-USB_STRING_PRODUCT "novaX_H743_V1"
+USB_STRING_PRODUCT "AF-H7 nano"
 
 # ---- LEDs ----
 # Schematic/Betaflight: LED0 is on PE3, LED1 is on PE4. Both are active-high.
@@ -293,4 +293,4 @@ define HAL_WITH_RAMTRON  0
 # Default Parameters
 # =============================================================================
 
-DEFAULT_PARAMETERS libraries/AP_HAL_ChibiOS/hwdef/novaX_H743_V1/defaults.parm
+DEFAULT_PARAMETERS libraries/AP_HAL_ChibiOS/hwdef/AF-H7_nano/defaults.parm
