@@ -137,8 +137,8 @@ SPIDEV osd         SPI2 DEVID1 AT7456E_CS MODE0 10*MHZ 10*MHZ
 # IMU
 # =============================================================================
 
-IMU Invensensev3 SPI:icm42688_1 ROTATION_YAW_270
-IMU Invensensev3 SPI:icm42688_2 ROTATION_YAW_270
+IMU Invensensev3 SPI:icm42688_1 ROTATION_ROLL_180_YAW_90
+IMU Invensensev3 SPI:icm42688_2 ROTATION_ROLL_180_YAW_90
 
 # fast sampling on both IMUs (bit0=IMU1, bit1=IMU2)
 define HAL_DEFAULT_INS_FAST_SAMPLE 3
@@ -176,7 +176,7 @@ define AP_BARO_SPL06_ENABLED 1
 # =============================================================================
 
 define HAL_PROBE_EXTERNAL_I2C_COMPASSES
-COMPASS IST8310 I2C:0:0x0E false ROTATION_NONE
+COMPASS IST8310 I2C:0:0x0E true ROTATION_NONE
 
 # =============================================================================
 # CAN Bus - FDCAN1 with TJA1051TK/3 transceiver
