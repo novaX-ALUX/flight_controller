@@ -29,6 +29,9 @@ case "${VEHICLE}" in
     blimp)
         VEHICLE_BIN="blimp"
         ;;
+    AP_Periph)
+        VEHICLE_BIN="AP_Periph"
+        ;;
     *)
         echo "Unsupported vehicle target: ${VEHICLE}" >&2
         exit 1
@@ -49,7 +52,44 @@ copy_if_exists "${BOOTLOADER_DIR}/${BOARD_NAME}_bl.bin" "${RELEASE_DIR}/${BOARD_
 copy_if_exists "${BOOTLOADER_DIR}/${BOARD_NAME}_bl.hex" "${RELEASE_DIR}/${BOARD_NAME}_bl.hex"
 copy_if_exists "${BOOTLOADER_DIR}/${BOARD_NAME}_bl.elf" "${RELEASE_DIR}/${BOARD_NAME}_bl.elf"
 copy_if_exists "${BIN_DIR}/${VEHICLE_BIN}.apj" "${RELEASE_DIR}/${VEHICLE_BIN}.apj"
+copy_if_exists "${BIN_DIR}/${VEHICLE_BIN}.bin" "${RELEASE_DIR}/${VEHICLE_BIN}.bin"
 copy_if_exists "${BIN_DIR}/${VEHICLE_BIN}_with_bl.hex" "${RELEASE_DIR}/${VEHICLE_BIN}_with_bl.hex"
+
+# AP_Periph builds emit only .bin/.apj (no combined hex). Generate Intel HEX here:
+# app-only, bootloader-only, and a combined bootloader+app hex.
+#
+# CRITICAL: build the hexes from the CONTIGUOUS .bin images, NOT from the ELF.
+# objcopy -O ihex on the ELF omits records for inter-section padding bytes, so
+# those addresses are left 0xFF (erased) when a programmer flashes the hex. But
+# the app descriptor's CRC was computed by waf over the zero-filled .bin, so a
+# hex-flashed app FAILS the bootloader's check_good_firmware() with BAD_CRC and
+# NEVER boots (board stays in the bootloader / MAINTENANCE). The .bin is gap-free
+# (padding = 0x00), so its hex reproduces the exact CRC'd image and boots.
+if [[ "${VEHICLE}" == "AP_Periph" ]]; then
+    OBJCOPY="${OBJCOPY:-arm-none-eabi-objcopy}"
+    APP_ELF="${BIN_DIR}/AP_Periph"
+    APP_BIN="${RELEASE_DIR}/AP_Periph.bin"
+    BL_BIN="${RELEASE_DIR}/${BOARD_NAME}_bl.bin"
+    if command -v "${OBJCOPY}" >/dev/null 2>&1 && [[ -f "${APP_BIN}" && -f "${BL_BIN}" ]]; then
+        # App load address (e.g. 0x08010000) from the ELF's first ihex record; the
+        # bootloader always loads at 0x08000000.
+        APP_BASE="$("${OBJCOPY}" -O ihex "${APP_ELF}" /dev/stdout 2>/dev/null | sed -n '1{s/^:02000004\([0-9A-Fa-f]\{4\}\).*/0x\10000/p;q}')"
+        APP_BASE="${APP_BASE:-0x08010000}"
+        "${OBJCOPY}" -I binary -O ihex --change-addresses "${APP_BASE}" "${APP_BIN}" "${RELEASE_DIR}/AP_Periph.hex"
+        "${OBJCOPY}" -I binary -O ihex --change-addresses 0x08000000   "${BL_BIN}"  "${RELEASE_DIR}/${BOARD_NAME}_bl.hex"
+        # The combined bootloader+app hex is best produced natively by waf
+        # (bin/AP_Periph_with_bl.hex via Tools/scripts/make_intel_hex.py), which
+        # needs the python 'intelhex' module:  pip install intelhex .  When that
+        # native hex exists it is copied above; only synthesize a board-named
+        # combined hex here as a FALLBACK when intelhex was missing at build time.
+        if [[ ! -f "${RELEASE_DIR}/AP_Periph_with_bl.hex" ]]; then
+            { head -n -1 "${RELEASE_DIR}/${BOARD_NAME}_bl.hex"; cat "${RELEASE_DIR}/AP_Periph.hex"; } \
+                > "${RELEASE_DIR}/${BOARD_NAME}_with_bl.hex"
+        fi
+    else
+        echo "warning: ${OBJCOPY} or .bin missing; skipping AP_Periph hex generation" >&2
+    fi
+fi
 
 MANIFEST_PATH="${RELEASE_DIR}/manifest.txt"
 {

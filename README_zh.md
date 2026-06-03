@@ -2,7 +2,7 @@
 
 [English](README.md) | [한국어](README_ko.md) | [日本語](README_ja.md)
 
-novaX 系列飞控的板级定义、构建脚本和固件发布产物。
+novaX 系列飞控与 DroneCAN 外设的板级定义、构建脚本和固件发布产物。
 
 ## 支持的板卡
 
@@ -10,6 +10,9 @@ novaX 系列飞控的板级定义、构建脚本和固件发布产物。
 |------|-----|-----|--------|------|-----|------|
 | AF-F4 nano | STM32F405 | ICM-42688-P | SPL06 | QMC5883P (外置) | MAX-M10S | ArduPilot / Betaflight |
 | AF-H7 nano | STM32H743 | 双 ICM-42688-P | DPS310 | IST8310 (内置) | - | ArduPilot / Betaflight |
+| AP-RTK dual&nbsp;† | STM32F412 | - | - | RM3100 | 双天线 RTK (移动基线) | ArduPilot AP_Periph |
+
+† **DroneCAN 外设**（GPS + 罗盘节点），并非飞控。基于 CUAV C-RTK2-HP，板卡 ID `6201`。
 
 ## 目录结构
 
@@ -18,14 +21,17 @@ novaX 系列飞控的板级定义、构建脚本和固件发布产物。
 │   ├── ardupilot/              # ArduPilot 源码 (git submodule)
 │   └── betaflight/             # Betaflight 源码 (git submodule)
 ├── boards/
-│   ├── AF-F4_nano/
+│   ├── AF-F4_nano/             # 飞控
 │   │   ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
 │   │   ├── betaflight/         # config.h
 │   │   └── docs/               # 原理图
-│   └── AF-H7_nano/
-│       ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
-│       ├── betaflight/         # config.h
-│       └── docs/               # 原理图
+│   ├── AF-H7_nano/             # 飞控
+│   │   ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
+│   │   ├── betaflight/         # config.h
+│   │   └── docs/               # 原理图
+│   └── AP-RTK_dual/            # DroneCAN AP_Periph 外设 (GPS + 罗盘)
+│       ├── ardupilot/          # hwdef.dat, hwdef-bl.dat
+│       └── metadata.yaml
 ├── scripts/
 │   ├── sync_ap_board.sh        # 将板级定义软链到 AP 源码树
 │   ├── build_ap.sh             # 配置 + 编译 + 打包 (ArduPilot)
@@ -49,12 +55,20 @@ cd flight_controller
 
 ### 编译 ArduPilot
 
+飞控（机型固件）：
+
 ```bash
 ./scripts/build_ap.sh AF-F4_nano copter
 ./scripts/build_ap.sh AF-H7_nano copter
 ```
 
-首次编译时 bootloader 会自动构建。
+DroneCAN 外设（AP_Periph 固件 —— 目标传入 `AP_Periph`）：
+
+```bash
+./scripts/build_ap.sh AP-RTK_dual AP_Periph
+```
+
+首次编译时 bootloader 会自动构建。ArduPilot 编译需要标准的 ArduPilot Python 包（`pymavlink`、`empy==3.3.4`、`intelhex` 等）；生成合并的 `*_with_bl.hex` 必须有 **`intelhex`** 模块。
 
 ### 编译 Betaflight
 
@@ -75,8 +89,8 @@ cd firmware/betaflight && make arm_sdk_install && cd ../..
 ls releases/AF-F4_nano/ardupilot/
 # arducopter.apj  arducopter_with_bl.hex  AF-F4_nano_bl.bin  ...
 
-ls releases/AF-H7_nano/betaflight/
-# betaflight_AF-H7_nano.hex  ...
+ls releases/AP-RTK_dual/ardupilot/
+# AP_Periph.bin  AP_Periph.apj  AP_Periph_with_bl.hex  AP-RTK_dual_bl.bin  ...
 ```
 
 ## 发布固件
@@ -88,11 +102,20 @@ ls releases/AF-H7_nano/betaflight/
 
 ## 烧录方式
 
+飞控：
+
 | 方式 | 文件 | 场景 |
 |------|------|------|
 | STLink / DFU | `*_with_bl.hex` | 首次烧录（含 bootloader） |
 | Mission Planner | `.apj` | ArduPilot OTA 更新 |
 | BF Configurator | `.hex` | Betaflight 更新 |
+
+DroneCAN 外设（如 AP-RTK dual —— 无 USB DFU）：
+
+| 方式 | 文件 | 场景 |
+|------|------|------|
+| STLink / SWD | `AP_Periph_with_bl.hex` | 首次烧录（bootloader + app，`0x08000000`） |
+| Mission Planner → DroneCAN | `AP_Periph.bin` | 通过 CAN 更新固件 |
 
 ## 工作原理
 
