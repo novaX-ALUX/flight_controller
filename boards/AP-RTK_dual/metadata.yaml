@@ -6,7 +6,7 @@ firmware_type: AP_Periph
 node_name: AP-RTK dual
 mcu: STM32F412Rx
 package: LQFP-64
-bootloader_board_id: 6201
+bootloader_board_id: 1085
 source_tree: firmware/ardupilot
 board_config: boards/AP-RTK_dual/ardupilot
 based_on: C-RTK2-HP

@@ -12,7 +12,7 @@ novaX 비행 컨트롤러 및 DroneCAN 주변장치용 보드 정의, 빌드 스
 | AF-H7 nano | STM32H743 | Dual ICM-42688-P | DPS310 | IST8310 (내장) | - | ArduPilot / Betaflight |
 | AP-RTK dual&nbsp;† | STM32F412 | - | - | RM3100 | 듀얼 안테나 RTK (무빙 베이스라인) | ArduPilot AP_Periph |
 
-† **DroneCAN 주변장치** (GPS + 컴퍼스 노드), 비행 컨트롤러가 아님. CUAV C-RTK2-HP 기반, 보드 ID `6201`.
+† **DroneCAN 주변장치** (GPS + 컴퍼스 노드), 비행 컨트롤러가 아님. CUAV C-RTK2-HP 기반, 보드 ID `1085` (CUAV와 동일하게 유지 → DroneCAN OTA 호환).
 
 ## 저장소 구조
 

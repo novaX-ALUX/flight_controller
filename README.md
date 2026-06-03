@@ -12,7 +12,7 @@ Board definitions, build scripts, and firmware releases for novaX flight control
 | AF-H7 nano | STM32H743 | Dual ICM-42688-P | DPS310 | IST8310 (int) | - | ArduPilot / Betaflight |
 | AP-RTK dual&nbsp;† | STM32F412 | - | - | RM3100 | Dual-antenna RTK (moving baseline) | ArduPilot AP_Periph |
 
-† **DroneCAN peripheral** (GPS + compass node), not a flight controller. Based on the CUAV C-RTK2-HP; board ID `6201`.
+† **DroneCAN peripheral** (GPS + compass node), not a flight controller. Based on the CUAV C-RTK2-HP; board ID `1085` (kept same as CUAV so it can be updated over DroneCAN).
 
 ## Repository Structure
 

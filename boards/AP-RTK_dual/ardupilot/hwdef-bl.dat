@@ -8,8 +8,8 @@ FLASH_RESERVE_START_KB 0
 # two sectors for bootloader, two for storage
 FLASH_BOOTLOADER_LOAD_KB 64
 
-# board ID for firmware load - MUST match the application hwdef (6201)
-APJ_BOARD_ID 6201
+# board ID for firmware load - MUST match the application hwdef (1085)
+APJ_BOARD_ID 1085
 
 # setup build for a peripheral firmware
 env AP_PERIPH 1

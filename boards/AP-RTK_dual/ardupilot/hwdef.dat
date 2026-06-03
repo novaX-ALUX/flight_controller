@@ -6,7 +6,8 @@
 # novaX "AP-RTK dual" clone board.
 #
 # Clone-specific changes vs C-RTK2-HP:
-#   - APJ_BOARD_ID 1085 -> 6201            (distinct novaX firmware identity)
+#   - APJ_BOARD_ID kept at 1085 (same as CUAV) so existing boards can be
+#     updated over DroneCAN without an SWD bootloader re-flash
 #   - DroneCAN node name -> "AP-RTK dual"  (CAN_APP_NODE_NAME)
 #   - RM3100 X/Y axes reversed on this PCB (constant 180-deg heading offset vs
 #     CUAV) -> corrected with ROTATION_YAW_90; see Compass section below.
@@ -28,11 +29,13 @@ STORAGE_FLASH_PAGE 2
 define HAL_STORAGE_SIZE 8192
 
 # board ID for firmware load.
-# novaX-ALUX reserved range 6200-6209 (6200 = AF-H7_nano). A distinct ID keeps
-# this clone from matching stock CUAV C-RTK2-HP (1085) firmware on the online
-# updater. NOTE: the flight controller recognises the GPS/compass over DroneCAN
-# by message type + node id, NOT by board id - so a new ID does not affect it.
-APJ_BOARD_ID 6201
+# Kept at CUAV's C-RTK2-HP board ID (1085) ON PURPOSE: a bootloader only boots
+# an app whose board ID matches its own, so keeping 1085 lets this firmware be
+# pushed over DroneCAN onto boards that already carry a CUAV 1085 bootloader -
+# no per-board SWD re-flash needed. The DroneCAN node name "AP-RTK dual" still
+# tells it apart, and the flight controller binds the GPS/compass by message +
+# node id, not by board id.
+APJ_BOARD_ID 1085
 
 # setup build for a peripheral firmware
 env AP_PERIPH 1

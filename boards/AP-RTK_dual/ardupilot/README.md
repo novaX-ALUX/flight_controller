@@ -11,13 +11,15 @@ Key hardware mapping:
 - CAN: `CAN1` (DroneCAN node)
 - Firmware: **AP_Periph** (peripheral firmware, not a vehicle firmware)
 - DroneCAN node name: `AP-RTK dual` (`CAN_APP_NODE_NAME`)
-- Board ID: `6201` (novaX-ALUX reserved range 6200–6209)
+- Board ID: `1085` (kept same as CUAV C-RTK2-HP — see note below)
 
 Clone-specific changes vs CUAV C-RTK2-HP:
 
-- `APJ_BOARD_ID` 1085 → **6201**. Distinct firmware identity; the flight
-  controller still recognises the GPS/compass over DroneCAN by message + node
-  id, *not* by board id.
+- `APJ_BOARD_ID` **kept at 1085** (same as CUAV). A bootloader only boots an
+  app whose board id matches its own, so keeping 1085 lets this firmware be
+  pushed over DroneCAN onto boards that already carry a CUAV 1085 bootloader —
+  no per-board SWD re-flash. The flight controller binds the GPS/compass by
+  message + node id, not by board id.
 - DroneCAN node name → **"AP-RTK dual"**.
 - **RM3100 X/Y axes are reversed** on this PCB, giving a constant 180° heading
   offset vs the CUAV board. Corrected in firmware with `ROTATION_YAW_90`
