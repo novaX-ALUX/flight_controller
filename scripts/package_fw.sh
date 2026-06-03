@@ -72,8 +72,13 @@ if [[ "${VEHICLE}" == "AP_Periph" ]]; then
     BL_BIN="${RELEASE_DIR}/${BOARD_NAME}_bl.bin"
     if command -v "${OBJCOPY}" >/dev/null 2>&1 && [[ -f "${APP_BIN}" && -f "${BL_BIN}" ]]; then
         # App load address (e.g. 0x08010000) from the ELF's first ihex record; the
-        # bootloader always loads at 0x08000000.
-        APP_BASE="$("${OBJCOPY}" -O ihex "${APP_ELF}" /dev/stdout 2>/dev/null | sed -n '1{s/^:02000004\([0-9A-Fa-f]\{4\}\).*/0x\10000/p;q}')"
+        # bootloader always loads at 0x08000000. Write to a temp file rather than
+        # piping objcopy to /dev/stdout|sed -- in a redirected/background context
+        # that pipe can leave objcopy blocked (zombie), stalling packaging.
+        APP_HEX_TMP="$(mktemp)"
+        "${OBJCOPY}" -O ihex "${APP_ELF}" "${APP_HEX_TMP}" 2>/dev/null || true
+        APP_BASE="$(sed -n '1{s/^:02000004\([0-9A-Fa-f]\{4\}\).*/0x\10000/p;q}' "${APP_HEX_TMP}")"
+        rm -f "${APP_HEX_TMP}"
         APP_BASE="${APP_BASE:-0x08010000}"
         "${OBJCOPY}" -I binary -O ihex --change-addresses "${APP_BASE}" "${APP_BIN}" "${RELEASE_DIR}/AP_Periph.hex"
         "${OBJCOPY}" -I binary -O ihex --change-addresses 0x08000000   "${BL_BIN}"  "${RELEASE_DIR}/${BOARD_NAME}_bl.hex"

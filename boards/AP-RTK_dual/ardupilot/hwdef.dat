@@ -85,12 +85,17 @@ I2C_ORDER I2C3
 # =============================================================================
 # Compass - RM3100 on I2C3 @ 0x20
 # =============================================================================
-# The CUAV C-RTK2-HP reference uses ROTATION_YAW_270.
-# On the AP-RTK dual clone PCB the RM3100 X/Y axes are reversed, which shows up
-# as a constant 180-deg heading offset vs the CUAV board. 180 deg == YAW_180, so
-# the corrected rotation is YAW_270 + 180 = ROTATION_YAW_90.
-# (Confirmed on hardware: ROTATION_NONE read 180 deg out; YAW_90 is correct.)
-COMPASS RM3100 I2C:0:0x20 false ROTATION_YAW_90
+# The clone PCB has the RM3100 X and Y axes SWAPPED vs a normal module (a
+# reflection, NOT a rotation). A swap cannot be undone by any ROTATION_* nor by
+# the flight controller's COMPASS_ORIENT / COMPASS_AUTO_ROT -- those only rotate
+# (proper rotations), which is why both CUAV's stock firmware (YAW_270) and an
+# earlier YAW_90 attempt read ~180 deg off and calibration could not fix it.
+# We undo the swap with a per-axis SIGN FLIP: AP_RM3100_REVERSAL_MASK 2 negates
+# the Y axis, turning the swap back into a normal compass frame. After flashing,
+# set COMPASS_AUTO_ROT=2 on the FC and recalibrate; it then auto-corrects the
+# remaining orientation just like a genuine module. (bit0=X 1, bit1=Y 2, bit2=Z 4)
+COMPASS RM3100 I2C:0:0x20 false ROTATION_NONE
+define AP_RM3100_REVERSAL_MASK 2
 
 # safety LED, active low
 PB5 SAFE_LED OUTPUT HIGH
