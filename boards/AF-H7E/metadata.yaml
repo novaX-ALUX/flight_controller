@@ -1,0 +1,30 @@
+board: AF-H7E
+platform:
+  - ardupilot
+mcu: STM32H753IIK6
+package: UFBGA-201
+bootloader_board_id: 6202
+source_tree: firmware/ardupilot
+board_config: boards/AF-H7E/ardupilot
+modules:
+  fmu: V6X-FM (STM32H753 + FM25V05 FRAM + SE050 secure element)
+  imu_board: V6X-IMU
+  base_board: U6X-BASE (STM32F103 IO MCU + LAN8742 Ethernet + LTC4417 power path)
+sensors:
+  imu1: ICM-42688-P
+  imu2: BMI088
+  imu3: ICM-20649
+  barometer: 2x ICP-20100
+  compass: RM3100
+fram: FM25V05
+secure_element: SE050
+ethernet: LAN8742 (100BASE-T)
+io_coprocessor: STM32F103
+can:
+  fdcan1: MCP2542
+  fdcan2: MCP2542
+notes: >
+  Modular autopilot with IOMCU, Ethernet and triple-redundant IMUs. The board
+  class is auto-detected at runtime; the I2C ID EEPROM must be programmed to the
+  matching board type. IMU/compass rotations should be verified on the bench
+  before flight.

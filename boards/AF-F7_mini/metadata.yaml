@@ -1,0 +1,34 @@
+board: AF-F7_mini
+platform:
+  - ardupilot
+mcu: STM32F765IIK6
+package: UFBGA
+bootloader_board_id: 6201
+source_tree: firmware/ardupilot
+board_config: boards/AF-F7_mini/ardupilot
+sensors:
+  imu1: ICM-20689
+  imu2: ICM-20602
+  imu3: BMI055
+  barometer: MS5611
+  compass: IST8310 (internal) + external probe
+fram: true
+can:
+  fdcan1: true
+  fdcan2: true
+ports:
+  serial1: TELEM1 (USART2, flow control)
+  serial2: TELEM2 (USART3, flow control)
+  serial3: GPS1 (USART1)
+  serial4: GPS2 (UART4)
+  serial5: TELEM3 (USART6)
+  serial6: DEBUG (UART7)
+i2c:
+  - IST8310 (internal)
+  - external GPS/compass connectors
+rc_input: PI5 (all protocols: SBUS/DSM/PPM/...)
+motor_outputs: 11
+notes: >
+  Autopilot-class flight controller without an IO co-processor. IMU/compass
+  rotations and battery-divider scaling should be verified on the bench before
+  flight.

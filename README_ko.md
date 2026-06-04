@@ -10,9 +10,13 @@ novaX 비행 컨트롤러 및 DroneCAN 주변장치용 보드 정의, 빌드 스
 |------|-----|-----|--------|--------|-----|--------|
 | AF-F4 nano | STM32F405 | ICM-42688-P | SPL06 | QMC5883P (외장) | MAX-M10S | ArduPilot / Betaflight |
 | AF-H7 nano | STM32H743 | Dual ICM-42688-P | DPS310 | IST8310 (내장) | - | ArduPilot / Betaflight |
+| AF-F7 mini&nbsp;‡ | STM32F765 | ICM-20689 + ICM-20602 + BMI055 | MS5611 | IST8310 (내장) | - | ArduPilot |
+| AF-H7E&nbsp;‡ | STM32H753 | ICM-42688-P + BMI088 + ICM-20649 | 2× ICP-20100 | RM3100 | - | ArduPilot |
 | AP-RTK dual&nbsp;† | STM32F412 | - | - | RM3100 | 듀얼 안테나 RTK (무빙 베이스라인) | ArduPilot AP_Periph |
 
 † **DroneCAN 주변장치** (GPS + 컴퍼스 노드), 비행 컨트롤러가 아님. CUAV C-RTK2-HP 기반, 보드 ID `1085` (CUAV와 동일하게 유지 → DroneCAN OTA 호환).
+
+‡ 중복 IMU를 갖춘 **오토파일럿급** 보드: AF-F7 mini는 PWM 출력을 직접 구동(IO 보조 프로세서 없음)하며, AF-H7E는 STM32F103 IO 보조 프로세서와 이더넷을 갖춘 모듈형 설계입니다. 보드 ID `6201` / `6202` (novaX-ALUX 예약 범위 `6200`–`6209`).
 
 ## 저장소 구조
 
@@ -29,6 +33,12 @@ novaX 비행 컨트롤러 및 DroneCAN 주변장치용 보드 정의, 빌드 스
 │   │   ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
 │   │   ├── betaflight/         # config.h
 │   │   └── docs/               # 회로도
+│   ├── AF-F7_mini/             # 비행 컨트롤러 (no IOMCU)
+│   │   ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
+│   │   └── docs/               # 회로도 + 네트리스트
+│   ├── AF-H7E/                 # 비행 컨트롤러 (modular, Ethernet)
+│   │   ├── ardupilot/          # hwdef.dat, hwdef-bl.dat, defaults.parm
+│   │   └── docs/               # 회로도 + 네트리스트
 │   └── AP-RTK_dual/            # DroneCAN AP_Periph 주변장치 (GPS + 컴퍼스)
 │       ├── ardupilot/          # hwdef.dat, hwdef-bl.dat
 │       └── metadata.yaml
@@ -60,6 +70,8 @@ cd flight_controller
 ```bash
 ./scripts/build_ap.sh AF-F4_nano copter
 ./scripts/build_ap.sh AF-H7_nano copter
+./scripts/build_ap.sh AF-F7_mini copter
+./scripts/build_ap.sh AF-H7E copter
 ```
 
 DroneCAN 주변장치 (AP_Periph 펌웨어 — 타깃으로 `AP_Periph` 전달):

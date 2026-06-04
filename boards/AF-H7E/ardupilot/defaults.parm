@@ -1,0 +1,12 @@
+# AF-H7E default parameters
+
+# ---- Frame: X quad by default ----
+FRAME_CLASS 1
+FRAME_TYPE 1
+
+# ---- Battery monitor: INA2xx (I2C smart power module) ----
+BATT_MONITOR 8
+
+# ---- Dual CAN (DroneCAN on both buses) ----
+CAN_P1_DRIVER 1
+CAN_P2_DRIVER 1

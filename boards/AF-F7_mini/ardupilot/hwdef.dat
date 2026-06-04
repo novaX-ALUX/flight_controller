@@ -1,0 +1,303 @@
+# =============================================================================
+# AF-F7 mini Flight Controller - Hardware Definition for ArduPilot
+# =============================================================================
+# MCU:   STM32F765IIK6 (UFBGA, 216MHz)  - 16MHz crystal (Epson FA-128)
+# IMU:   ICM-20689 + ICM-20602 + BMI055 gyro/acc   (all on SPI1)
+# BARO:  MS5611 (SPI4)
+# MAG:   IST8310 (I2C, internal) + probe external compasses
+# FRAM:  on SPI2 (parameter storage)
+# CAN:   FDCAN1 + FDCAN2
+#
+# This board has no IO co-processor: the FMU drives all PWM outputs directly.
+#
+# Pin mapping derived from the board netlist (docs/X5_Autopilot.NET) and
+# verified against the STM32F765 UFBGA ballout.
+# =============================================================================
+
+# ---- MCU & Board ----
+MCU STM32F7xx STM32F767xx
+
+OSCILLATOR_HZ 16000000
+
+# Board ID 6201 (IDs 6200-6209 reserved for novaX-ALUX)
+APJ_BOARD_ID 6201
+
+define CONFIG_HAL_BOARD_SUBTYPE HAL_BOARD_SUBTYPE_CHIBIOS_FMUV5
+define HAL_CHIBIOS_ARCH_FMUV5 1
+
+FLASH_SIZE_KB 2048
+FLASH_RESERVE_START_KB 32
+
+env OPTIMIZE -O2
+
+# no IOMCU: use TIM5 as the system timer so TIM2 is free for extra PWM
+STM32_ST_USE_TIMER 5
+
+# ---- USB (Type-C) ----
+PA11 OTG_FS_DM OTG1
+PA12 OTG_FS_DP OTG1
+
+USB_STRING_MANUFACTURER "NovaX"
+USB_STRING_PRODUCT "AF-F7 mini"
+
+# SWD debug
+PA13 JTMS-SWDIO SWD
+PA14 JTCK-SWCLK SWD
+
+# =============================================================================
+# Serial Ports (no IOMCU UART)
+# =============================================================================
+# SERIAL0 = USB
+# SERIAL1 = USART2  TELEM1 (flow control)
+# SERIAL2 = USART3  TELEM2 (flow control)
+# SERIAL3 = USART1  GPS1
+# SERIAL4 = UART4   GPS2 / I2C2 combo connector
+# SERIAL5 = USART6  TELEM3
+# SERIAL6 = UART7   DEBUG
+SERIAL_ORDER OTG1 USART2 USART3 USART1 UART4 USART6 UART7 OTG2
+
+# USART2 - TELEM1
+PD5 USART2_TX USART2
+PD6 USART2_RX USART2
+PD3 USART2_CTS USART2
+PD4 USART2_RTS USART2
+
+# USART3 - TELEM2
+PD8  USART3_TX USART3
+PD9  USART3_RX USART3
+PD11 USART3_CTS USART3
+PD12 USART3_RTS USART3
+
+# USART1 - GPS1
+PB6 USART1_TX USART1 NODMA
+PB7 USART1_RX USART1 NODMA
+
+# UART4 - GPS2
+PD1 UART4_TX UART4 NODMA
+PD0 UART4_RX UART4 NODMA
+
+# USART6 - TELEM3
+PG14 USART6_TX USART6 NODMA
+PG9  USART6_RX USART6 NODMA
+PG15 USART6_CTS USART6
+PG8  USART6_RTS USART6
+
+# UART7 - DEBUG
+PF6 UART7_RX UART7 NODMA
+PE8 UART7_TX UART7 NODMA
+
+# =============================================================================
+# SPI Buses
+# =============================================================================
+# SPI1 - internal sensors (ICM20689 / ICM20602 / BMI055)
+PG11 SPI1_SCK  SPI1
+PA6  SPI1_MISO SPI1
+PD7  SPI1_MOSI SPI1
+
+# SPI2 - FRAM
+PI1 SPI2_SCK  SPI2
+PI2 SPI2_MISO SPI2
+PI3 SPI2_MOSI SPI2
+
+# SPI4 - MS5611 baro
+PE2  SPI4_SCK  SPI4
+PE13 SPI4_MISO SPI4
+PE6  SPI4_MOSI SPI4
+
+# ---- sensor CS ----
+PF10 MS5611_CS    CS
+PF2  ICM20689_CS  CS SPEED_VERYLOW
+PF3  ICM20602_CS  CS SPEED_VERYLOW
+PF4  BMI055_G_CS  CS
+PG10 BMI055_A_CS  CS
+PF5  FRAM_CS      CS SPEED_VERYLOW
+
+# ---- DRDY pins ----
+PB4  DRDY1_ICM20689   INPUT
+PB14 DRDY2_BMI055_GYRO INPUT
+PB15 DRDY3_BMI055_ACC  INPUT
+PC5  DRDY4_ICM20602   INPUT
+
+# =============================================================================
+# I2C Buses
+# =============================================================================
+PB8 I2C1_SCL I2C1
+PB9 I2C1_SDA I2C1
+
+PF1 I2C2_SCL I2C2
+PF0 I2C2_SDA I2C2
+
+PH7 I2C3_SCL I2C3
+PH8 I2C3_SDA I2C3
+
+PF14 I2C4_SCL I2C4
+PF15 I2C4_SDA I2C4
+
+I2C_ORDER I2C3 I2C1 I2C2 I2C4
+
+# =============================================================================
+# Power rail enables / sensing
+# =============================================================================
+PE3 VDD_3V3_SENSORS_EN OUTPUT LOW
+
+# start peripheral power off, then enable after init (prevents RTS bootloader hold)
+PF12 nVDD_5V_HIPOWER_EN OUTPUT HIGH
+PG4  nVDD_5V_PERIPH_EN  OUTPUT HIGH
+PG5  VDD_5V_RC_EN       OUTPUT HIGH
+
+PG1  VDD_BRICK_nVALID   INPUT PULLUP
+PG2  VDD_BRICK2_nVALID  INPUT PULLUP
+PG3  VBUS_nVALID        INPUT PULLUP
+PF13 VDD_5V_HIPOWER_nOC INPUT PULLUP
+PE15 VDD_5V_PERIPH_nOC  INPUT PULLUP
+
+# Control of Spektrum power pin (active high)
+PE4 SPEKTRUM_PWR OUTPUT HIGH GPIO(73)
+define HAL_GPIO_SPEKTRUM_PWR 73
+define HAL_SPEKTRUM_PWR_ENABLED 1
+
+# IMU heater
+PA7 HEATER_EN OUTPUT LOW GPIO(80)
+define HAL_HEATER_GPIO_PIN 80
+
+# =============================================================================
+# PWM / Motor Outputs
+# =============================================================================
+# FMU_CH1..CH8 (netlist) -> PWM(1..8); 3 extra outputs on TIM2 -> PWM(9..11)
+PE14 TIM1_CH4  TIM1  PWM(1)  GPIO(50)   # FMU_CH1
+PA10 TIM1_CH3  TIM1  PWM(2)  GPIO(51)   # FMU_CH2
+PE11 TIM1_CH2  TIM1  PWM(3)  GPIO(52)   # FMU_CH3
+PE9  TIM1_CH1  TIM1  PWM(4)  GPIO(53)   # FMU_CH4
+PD13 TIM4_CH2  TIM4  PWM(5)  GPIO(54)   # FMU_CH5
+PD14 TIM4_CH3  TIM4  PWM(6)  GPIO(55)   # FMU_CH6
+# TIM12 has no TIMn_UP DMA option -> NODMA on the last 2
+PH6  TIM12_CH1 TIM12 PWM(7)  GPIO(56) NODMA   # FMU_CH7
+PH9  TIM12_CH2 TIM12 PWM(8)  GPIO(57) NODMA   # FMU_CH8
+# extra outputs on the FMU capture pins
+PA5  TIM2_CH1  TIM2  PWM(9)  GPIO(58)
+PB3  TIM2_CH2  TIM2  PWM(10) GPIO(59)
+PB11 TIM2_CH4  TIM2  PWM(11) GPIO(60)
+
+# buzzer
+PE5 TIM9_CH1 TIM9 GPIO(77) ALARM
+
+# =============================================================================
+# RC Input - dedicated RCIN pin (FMU_PPM_INPUT = PI5), all protocols
+# =============================================================================
+PI5 TIM8_CH1 TIM8 RCININT PULLDOWN LOW
+
+# =============================================================================
+# ADC - Analog Inputs
+# =============================================================================
+PA0 BATT_VOLTAGE_SENS  ADC1 SCALE(1)
+PA1 BATT_CURRENT_SENS  ADC1 SCALE(1)
+PA2 BATT2_VOLTAGE_SENS ADC1 SCALE(1)
+PA3 BATT2_CURRENT_SENS ADC1 SCALE(1)
+PC4 SPARE1_ADC1        ADC1 SCALE(1)
+PA4 SPARE2_ADC1        ADC1 SCALE(1)
+PB0 RSSI_IN            ADC1 SCALE(1)
+PC0 VDD_5V_SENS        ADC1 SCALE(2)
+PC1 SCALED_V3V3        ADC1 SCALE(2)
+
+# standard power module scaling
+# NOTE: verify against the shipped power module before flight.
+define HAL_BATT_VOLT_SCALE 18.0
+define HAL_BATT_CURR_SCALE 24.0
+define HAL_BATT_VOLT_PIN 0
+define HAL_BATT_CURR_PIN 1
+define HAL_BATT2_VOLT_PIN 2
+define HAL_BATT2_CURR_PIN 3
+define HAL_BATT_MONITOR_DEFAULT 4
+
+# =============================================================================
+# CAN Bus
+# =============================================================================
+PI9  CAN1_RX CAN1
+PH13 CAN1_TX CAN1
+PB12 CAN2_RX CAN2
+PB13 CAN2_TX CAN2
+
+# =============================================================================
+# SPI device declarations
+# =============================================================================
+SPIDEV ms5611   SPI4 DEVID1  MS5611_CS   MODE3 20*MHZ 20*MHZ
+SPIDEV icm20689 SPI1 DEVID1  ICM20689_CS MODE3  2*MHZ  8*MHZ
+SPIDEV icm20602 SPI1 DEVID2  ICM20602_CS MODE3  2*MHZ  8*MHZ
+SPIDEV bmi055_g SPI1 DEVID3  BMI055_G_CS MODE3 10*MHZ 10*MHZ
+SPIDEV bmi055_a SPI1 DEVID4  BMI055_A_CS MODE3 10*MHZ 10*MHZ
+SPIDEV ramtron  SPI2 DEVID1  FRAM_CS     MODE3  8*MHZ  8*MHZ
+
+# =============================================================================
+# IMUs (rotations are provisional; VERIFY on the bench)
+# =============================================================================
+IMU Invensense SPI:icm20689 ROTATION_NONE
+IMU Invensense SPI:icm20602 ROTATION_NONE
+IMU BMI055 SPI:bmi055_a SPI:bmi055_g ROTATION_ROLL_180_YAW_90
+
+define HAL_DEFAULT_INS_FAST_SAMPLE 1
+
+# =============================================================================
+# Barometer - MS5611 on SPI4
+# =============================================================================
+BARO MS56XX SPI:ms5611
+
+# =============================================================================
+# Compass - IST8310 (internal) + probe external
+# =============================================================================
+define HAL_PROBE_EXTERNAL_I2C_COMPASSES
+COMPASS IST8310 I2C:ALL_EXTERNAL:0x0E true  ROTATION_ROLL_180_YAW_90
+COMPASS IST8310 I2C:ALL_INTERNAL:0x0E false ROTATION_ROLL_180_YAW_90
+define HAL_COMPASS_AUTO_ROT_DEFAULT 2
+
+# =============================================================================
+# MicroSD (SDMMC1 4-bit)
+# =============================================================================
+PC8  SDMMC_D0  SDMMC1
+PC9  SDMMC_D1  SDMMC1
+PC10 SDMMC_D2  SDMMC1
+PC11 SDMMC_D3  SDMMC1
+PC12 SDMMC_CK  SDMMC1
+PD2  SDMMC_CMD SDMMC1
+define HAL_OS_FATFS_IO 1
+define HAL_BOARD_LOG_DIRECTORY "/APM/LOGS"
+define HAL_BOARD_TERRAIN_DIRECTORY "/APM/TERRAIN"
+
+# =============================================================================
+# LEDs
+# =============================================================================
+# main board LEDs (active low): RED=PB1, GREEN=PC6, BLUE=PC7
+PB1 LED_RED   OUTPUT OPENDRAIN GPIO(90)
+PC6 LED_GREEN OUTPUT GPIO(91) LOW
+PC7 LED_BLUE  OUTPUT GPIO(92) HIGH
+define AP_NOTIFY_GPIO_LED_2_ENABLED 1
+define HAL_GPIO_A_LED_PIN 90
+define HAL_GPIO_B_LED_PIN 92
+
+# external UI RGB LEDs (active low, 5V supply -> open drain), pixracer scheme
+PH10 LED_R1 OUTPUT OPENDRAIN HIGH GPIO(0)
+PH11 LED_G1 OUTPUT OPENDRAIN HIGH GPIO(1)
+PH12 LED_B1 OUTPUT OPENDRAIN HIGH GPIO(2)
+define AP_NOTIFY_GPIO_LED_RGB_RED_PIN 0
+define AP_NOTIFY_GPIO_LED_RGB_GREEN_PIN 1
+define AP_NOTIFY_GPIO_LED_RGB_BLUE_PIN 2
+define AP_NOTIFY_GPIO_LED_RGB_ENABLED 1
+
+# =============================================================================
+# Safety switch
+# =============================================================================
+PE12 LED_SAFETY OUTPUT
+PE10 SAFETY_IN  INPUT PULLDOWN
+define HAL_HAVE_SAFETY_SWITCH 1
+
+# =============================================================================
+# Storage (FRAM)
+# =============================================================================
+define HAL_STORAGE_SIZE 32768
+define HAL_WITH_RAMTRON 1
+
+DMA_PRIORITY SDMMC* ADC* SPI* TIM*
+
+# =============================================================================
+# Default Parameters
+# =============================================================================
+DEFAULT_PARAMETERS libraries/AP_HAL_ChibiOS/hwdef/AF-F7_mini/defaults.parm
