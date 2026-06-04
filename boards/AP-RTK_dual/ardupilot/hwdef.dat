@@ -9,8 +9,8 @@
 #   - APJ_BOARD_ID kept at 1085 (same as CUAV) so existing boards can be
 #     updated over DroneCAN without an SWD bootloader re-flash
 #   - DroneCAN node name -> "AP-RTK dual"  (CAN_APP_NODE_NAME)
-#   - RM3100 X/Y axes reversed on this PCB (constant 180-deg heading offset vs
-#     CUAV) -> corrected with ROTATION_YAW_90; see Compass section below.
+#   - RM3100 Z (vertical) axis reads inverted on this PCB; X and Y are correct
+#     -> corrected with AP_RM3100_REVERSAL_MASK 4; see Compass section below.
 # =============================================================================
 
 # hw definition file for processing by chibios_pins.py
@@ -85,17 +85,22 @@ I2C_ORDER I2C3
 # =============================================================================
 # Compass - RM3100 on I2C3 @ 0x20
 # =============================================================================
-# The clone PCB has the RM3100 X and Y axes SWAPPED vs a normal module (a
-# reflection, NOT a rotation). A swap cannot be undone by any ROTATION_* nor by
-# the flight controller's COMPASS_ORIENT / COMPASS_AUTO_ROT -- those only rotate
-# (proper rotations), which is why both CUAV's stock firmware (YAW_270) and an
-# earlier YAW_90 attempt read ~180 deg off and calibration could not fix it.
-# We undo the swap with a per-axis SIGN FLIP: AP_RM3100_REVERSAL_MASK 2 negates
-# the Y axis, turning the swap back into a normal compass frame. After flashing,
-# set COMPASS_AUTO_ROT=2 on the FC and recalibrate; it then auto-corrects the
-# remaining orientation just like a genuine module. (bit0=X 1, bit1=Y 2, bit2=Z 4)
+# On this clone PCB the RM3100 Z (vertical) axis reads inverted, while X and Y
+# are correct. Verified by logging raw sensor X/Y/Z at four known headings
+# (60 / 150 / 230 / 300 deg): the X and Y sign patterns matched a normal NED
+# compass at all four, but Z was negative at every heading (it should be
+# positive/down in the northern hemisphere). A single-axis sign flip is a
+# reflection, not a rotation, so no ROTATION_* / COMPASS_ORIENT / COMPASS_AUTO_ROT
+# can undo it -- which is why stock firmware read wrong and calibration kept
+# landing on odd roll orientations.
+#
+# Fix: AP_RM3100_REVERSAL_MASK bit 2 (value 4) negates Z inside the driver. It is
+# an existing upstream RM3100 feature (no source patch), so the whole fix lives
+# in this board config and survives a fresh clone with a vanilla submodule. With
+# Z corrected, ROTATION_NONE is right and COMPASS_AUTO_ROT settles on NONE (plus
+# any physical mounting yaw).
 COMPASS RM3100 I2C:0:0x20 false ROTATION_NONE
-define AP_RM3100_REVERSAL_MASK 2
+define AP_RM3100_REVERSAL_MASK 4
 
 # safety LED, active low
 PB5 SAFE_LED OUTPUT HIGH
