@@ -1,25 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Publish firmware to a GitHub Release as INDIVIDUAL files (NO zip), in the same
-# format used for the AP-RTK dual release: per board, upload
-#   <prefix>.apj           - app, OTA update (Mission Planner / DroneCAN)
-#   <prefix>.bin           - app, raw binary OTA
-#   <prefix>_with_bl.hex   - bootloader + app, SWD / DFU full-chip flash
-#   <prefix>-betaflight.hex- betaflight, flash via BF Configurator (FC boards)
-# where <prefix> is the tag itself for a board-scoped tag (e.g.
-# AP-RTK_dual-v0.1.0), otherwise "<board>-<tag>" so files stay distinguishable.
+# Publish firmware to a GitHub Release as INDIVIDUAL files (NO zip).
+# Release notes follow the same layout as the global v0.1.x releases (Jarvis):
+#   ## Firmware Release <tag>
+#   | Board | Platform | Commit |   (one row per board/platform)
+#   ### Download                     (per-board file list, purposes)
+# but the assets are the individual files instead of a per-board zip:
+#   <prefix>.apj           - OTA update via Mission Planner
+#   <prefix>.bin           - app binary (OTA)
+#   <prefix>_with_bl.hex   - first flash via STLink/DFU (bootloader + app)
+#   <prefix>-betaflight.hex- flash via Betaflight Configurator (FC boards)
+# <prefix> is the tag for a board-scoped tag (e.g. AF-F4_nano-v0.1.4),
+# otherwise "<board>-<tag>" so files stay distinguishable.
 #
-# Uses the GitHub REST API with GITHUB_ACCESS_TOKEN from .env (no `gh` needed).
+# Uses the GitHub REST API with GITHUB_ACCESS_TOKEN from .env (no `gh`, no `zip`).
 #
 # Usage:
 #   scripts/release.sh <tag> [board ...]
-#     scripts/release.sh AP-RTK_dual-v0.1.0 AP-RTK_dual   # one board, board-scoped tag
-#     scripts/release.sh v0.2.0                           # all boards in releases/
-#   DRY_RUN=1 scripts/release.sh <tag> [board ...]        # show plan, touch nothing
+#     scripts/release.sh AF-F4_nano-v0.1.4 AF-F4_nano   # one board
+#     scripts/release.sh v0.1.5                          # all boards in releases/
+#   DRY_RUN=1 scripts/release.sh <tag> [board ...]       # show plan, touch nothing
 #
-# Build artifacts first (scripts/build_ap.sh / build_bf.sh) so that
-# releases/<board>/<platform>/ holds the per-platform files.
+# Build artifacts first (scripts/build_ap.sh / build_bf.sh).
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TAG="${1:?Usage: release.sh <tag> [board ...]}"
@@ -36,10 +39,10 @@ DRY    = bool(os.environ.get('DRY_RUN'))
 REL    = 'releases'
 
 PURPOSE = {
-    'apj':          'app - OTA update (Mission Planner / DroneCAN)',
-    'bin':          'app - raw binary OTA',
-    '_with_bl.hex': 'bootloader + app - SWD / DFU full-chip flash',
-    'betaflight':   'betaflight - flash via Betaflight Configurator',
+    'apj':          'OTA update via Mission Planner',
+    'bin':          'app binary (OTA)',
+    '_with_bl.hex': 'first flash via STLink/DFU (bootloader + app)',
+    'betaflight':   'flash via Betaflight Configurator',
 }
 
 def get_token():
@@ -68,17 +71,17 @@ if not BOARDS:
 if not BOARDS:
     sys.exit('No release artifacts in releases/. Build first.')
 
-assets = []                       # (asset_name, src_path, suffix_key)
-notes  = ['## Firmware Release %s' % TAG, '']
+assets      = []   # (asset_name, src_path, key)
+board_rows  = []   # (board, platform, commit) for the top table
+dl_sections = []   # (board, [(asset_name, purpose), ...]) for the Download section
 
 for board in BOARDS:
     bdir = os.path.join(REL, board)
     if not os.path.isdir(bdir):
         print('warn: no releases for %s, skipping' % board, file=sys.stderr)
         continue
-    # tag-scoped name doubling guard: AP-RTK_dual-v0.1.0 + board AP-RTK_dual
     prefix = TAG if TAG.startswith(board) else ('%s-%s' % (board, TAG))
-    section, any_file = ['### %s' % board, '', '| File | Purpose |', '|------|---------|'], False
+    files_for_board = []
 
     ap = os.path.join(bdir, 'ardupilot')
     if os.path.isdir(ap):
@@ -89,18 +92,20 @@ for board in BOARDS:
         plan = [('apj', apj, prefix + '.apj'),
                 ('bin', binf, prefix + '.bin'),
                 ('_with_bl.hex', withbl, prefix + '_with_bl.hex')]
+        had = False
         for key, fname, aname in plan:
             if fname and os.path.isfile(os.path.join(ap, fname)):
                 assets.append((aname, os.path.join(ap, fname), key))
-                section.append('| `%s` | %s |' % (aname, PURPOSE[key]))
-                any_file = True
-        commit = '-'
-        man = os.path.join(ap, 'manifest.txt')
-        if os.path.isfile(man):
-            for l in open(man):
-                if l.startswith('ap_commit='):
-                    commit = l.split('=', 1)[1].strip()
-        section += ['', 'ArduPilot commit: `%s`' % commit]
+                files_for_board.append((aname, PURPOSE[key]))
+                had = True
+        if had:
+            commit = '-'
+            man = os.path.join(ap, 'manifest.txt')
+            if os.path.isfile(man):
+                for l in open(man):
+                    if l.startswith('ap_commit='):
+                        commit = l.split('=', 1)[1].strip()
+            board_rows.append((board, 'ardupilot', commit))
 
     bf = os.path.join(bdir, 'betaflight')
     if os.path.isdir(bf):
@@ -108,15 +113,30 @@ for board in BOARDS:
         if hexf:
             aname = prefix + '-betaflight.hex'
             assets.append((aname, os.path.join(bf, hexf), 'betaflight'))
-            section.append('| `%s` | %s |' % (aname, PURPOSE['betaflight']))
-            any_file = True
+            files_for_board.append((aname, PURPOSE['betaflight']))
+            board_rows.append((board, 'betaflight', '-'))
 
-    if any_file:
-        notes += section + ['']
+    if files_for_board:
+        dl_sections.append((board, files_for_board))
 
 if not assets:
     sys.exit('No individual files found to upload (build first).')
-notes_txt = '\n'.join(notes)
+
+# --- Build release notes in the v0.1.x (Jarvis) layout ---
+notes = ['## Firmware Release %s' % TAG, '',
+         '| Board | Platform | Commit |', '|-------|----------|--------|']
+for b, p, c in board_rows:
+    notes.append('| %s | %s | `%s` |' % (b, p, c))
+notes += ['', '### Download', '']
+multi = len(dl_sections) > 1
+for board, files in dl_sections:
+    if multi:
+        notes += ['**%s**' % board, '']
+    notes += ['| File | Purpose |', '|------|---------|']
+    for aname, purpose in files:
+        notes.append('| `%s` | %s |' % (aname, purpose))
+    notes.append('')
+notes_txt = '\n'.join(notes).rstrip() + '\n'
 
 print('Release tag : %s' % TAG)
 print('Assets (%d):' % len(assets))
