@@ -5,8 +5,10 @@
 # MCU class and specific type
 MCU STM32F4xx STM32F405xx
 
-# board ID - use same as SpeedyBee F405 V4 for bootloader compatibility
-APJ_BOARD_ID AP_HW_SPEEDYBEEF4V4
+# board ID - distinct novaX ID so stock SpeedyBee firmware cannot update or boot.
+# Bootloader + app must share this id; existing boards (SpeedyBee 1136 bootloader)
+# need a one-time SWD/DFU full-chip reflash of the combined hex to switch over.
+APJ_BOARD_ID 6203
 
 # crystal frequency, setup to use external oscillator
 OSCILLATOR_HZ 8000000

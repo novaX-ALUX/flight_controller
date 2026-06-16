@@ -3,7 +3,7 @@ platform:
   - ardupilot
   - betaflight
 mcu: STM32F405xx
-bootloader_board_id: AP_HW_SPEEDYBEEF4V4
+bootloader_board_id: 6203
 source_tree: firmware/ardupilot
 board_config: boards/AF-F4_nano/ardupilot
 sensors:
