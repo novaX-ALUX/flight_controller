@@ -28,6 +28,23 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TAG="${1:?Usage: release.sh <tag> [board ...]}"
 shift || true
 
+# A GLOBAL version tag (vX.Y.Z) must match the VERSION file -- the single source
+# baked into the firmware at build time -- so the release label matches what GCS
+# reports. Board-scoped tags (e.g. AF-F4_nano-v0.1.4) are left alone. Override
+# with ALLOW_VERSION_MISMATCH=1 for a deliberate re-tag.
+VERSION_FILE="${ROOT_DIR}/VERSION"
+if [[ -f "${VERSION_FILE}" && "${TAG}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    FILE_VERSION="$(tr -d '[:space:]' < "${VERSION_FILE}")"
+    TAG_VERSION="${TAG#v}"
+    if [[ "${TAG_VERSION}" != "${FILE_VERSION}" && "${ALLOW_VERSION_MISMATCH:-0}" != "1" ]]; then
+        echo "Error: tag '${TAG}' does not match VERSION file '${FILE_VERSION}'." >&2
+        echo "       The firmware was built with novaX v${FILE_VERSION}; releasing it as" >&2
+        echo "       '${TAG}' would mislabel it. Fix VERSION (and rebuild) or the tag." >&2
+        echo "       Override with ALLOW_VERSION_MISMATCH=1 if this is intentional." >&2
+        exit 1
+    fi
+fi
+
 cd "${ROOT_DIR}"
 TAG="${TAG}" BOARDS="${*}" DRY_RUN="${DRY_RUN:-}" python3 - <<'PYEOF'
 import json, os, sys, urllib.request, urllib.error
@@ -66,8 +83,24 @@ def api(url, data=None, method='GET', ctype='application/json'):
         except Exception:
             return e.code, {}
 
+def is_peripheral(board):
+    # DroneCAN/AP_Periph peripherals (e.g. AP-RTK_dual) are released on their own
+    # version track, so they are excluded from auto-discovery under a shared FC tag.
+    meta = os.path.join('boards', board, 'metadata.yaml')
+    try:
+        for line in open(meta):
+            s = line.strip().lower()
+            if s.startswith('firmware_type:') and 'ap_periph' in s:
+                return True
+    except OSError:
+        pass
+    return False
+
 if not BOARDS:
     BOARDS = sorted(d for d in os.listdir(REL) if os.path.isdir(os.path.join(REL, d)))
+    for b in [b for b in BOARDS if is_peripheral(b)]:
+        print('note: skipping peripheral %s (own version track, not %s)' % (b, TAG), file=sys.stderr)
+    BOARDS = [b for b in BOARDS if not is_peripheral(b)]
 if not BOARDS:
     sys.exit('No release artifacts in releases/. Build first.')
 

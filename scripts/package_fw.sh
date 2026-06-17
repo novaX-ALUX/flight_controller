@@ -103,6 +103,7 @@ MANIFEST_PATH="${RELEASE_DIR}/manifest.txt"
     echo "source_tree=firmware/ardupilot"
     echo "board_config=boards/${BOARD_NAME}/ardupilot"
     echo "ap_commit=$(git -C "${AP_ROOT}" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+    if [[ -n "${NOVAX_VERSION:-}" ]]; then echo "novax_version=${NOVAX_VERSION}"; fi
     echo "generated_at=$(date -Iseconds)"
     echo "files:"
     find "${RELEASE_DIR}" -maxdepth 1 -type f ! -name manifest.txt -printf '  %f\n' | sort

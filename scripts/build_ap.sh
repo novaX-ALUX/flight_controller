@@ -36,7 +36,30 @@ if [[ ! -f "${BL_BIN}" ]]; then
     python3 Tools/scripts/build_bootloaders.py "${BOARD_NAME}"
 fi
 
-./waf configure --board "${BOARD_NAME}"
+# --- novaX custom firmware version string (shown in GCS) ---------------------
+# Inject AP_CUSTOM_FIRMWARE_STRING through --extra-hwdef so all flight
+# controllers share ONE novaX version without editing each board's hwdef. The
+# upstream ArduPilot version is preserved separately in fw_string_original, and
+# the git hash is auto-appended by AP_FWVersionDefine.h. The version source is
+# the repo-root VERSION file (override with the NOVAX_VERSION env var).
+# Peripherals (AP_Periph, e.g. AP-RTK_dual) are on their own version track and
+# are intentionally NOT stamped here.
+EXTRA_HWDEF_ARGS=()
+if [[ "${VEHICLE}" != "AP_Periph" ]]; then
+    NOVAX_VERSION="${NOVAX_VERSION:-$(cat "${ROOT_DIR}/VERSION" 2>/dev/null || echo dev)}"
+    # Keep the custom string to just the novaX version; ArduPilot auto-appends the
+    # git hash -> "novaX v1.0.0 (g1a2b3c4)". The upstream AP version (THISFIRMWARE)
+    # is preserved separately in fw_string_original, so it is not repeated here.
+    FW_STR="novaX v${NOVAX_VERSION}"
+    EXTRA_HWDEF="${ROOT_DIR}/build/novax_version_${BOARD_NAME}.hwdef"
+    mkdir -p "${ROOT_DIR}/build"
+    printf 'define AP_CUSTOM_FIRMWARE_STRING "%s"\n' "${FW_STR}" > "${EXTRA_HWDEF}"
+    EXTRA_HWDEF_ARGS=(--extra-hwdef "${EXTRA_HWDEF}")
+    export NOVAX_VERSION
+    echo "novaX firmware string: ${FW_STR}"
+fi
+
+./waf configure --board "${BOARD_NAME}" ${EXTRA_HWDEF_ARGS[@]+"${EXTRA_HWDEF_ARGS[@]}"}
 ./waf "${VEHICLE}"
 
 "${ROOT_DIR}/scripts/package_fw.sh" "${BOARD_NAME}" "${VEHICLE}"
