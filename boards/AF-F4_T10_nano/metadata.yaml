@@ -1,0 +1,32 @@
+board: AF-F4_T10_nano
+platform:
+  - ardupilot
+mcu: STM32F405xx
+bootloader_board_id: 6203
+source_tree: firmware/ardupilot
+board_config: boards/AF-F4_T10_nano/ardupilot
+notes: >-
+  AF-F4_nano variant with the CADDX gimbal mount enabled. Same STM32F405
+  hardware and board_id (6203) as AF-F4_nano, so an AF-F4_nano board accepts
+  this firmware over the normal .apj updater. Feature set mirrors the
+  custom.ardupilot.org "Selected Features" build (see ardupilot/AF-F4_T10_features.inc)
+  plus the CADDX gimbal (HAL_MOUNT_ENABLED + HAL_MOUNT_CADDX_ENABLED).
+sensors:
+  imu: Invensensev3
+  barometer: SPL06
+  gps: MAX-M10S
+  compass: QMC5883P
+gimbal:
+  type: CADDX (MNT_TYPE 13)
+  backend: HAL_MOUNT_CADDX_ENABLED
+ports:
+  serial1: MAX-M10S GPS
+  serial2: RCIN
+  serial3: VTX
+  uart4: ELRS
+  uart5: ESC telemetry
+  serial6: spare (CADDX gimbal recommended)
+i2c:
+  bus1:
+    - QMC5883P
+    - SPL06
