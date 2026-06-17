@@ -16,7 +16,9 @@ novaX 비행 컨트롤러 및 DroneCAN 주변장치용 보드 정의, 빌드 스
 
 † **DroneCAN 주변장치** (GPS + 컴퍼스 노드), 비행 컨트롤러가 아님. CUAV C-RTK2-HP 기반, 보드 ID `1085` (CUAV와 동일하게 유지 → DroneCAN OTA 호환).
 
-‡ 중복 IMU를 갖춘 **오토파일럿급** 보드: AF-F7 mini는 PWM 출력을 직접 구동(IO 보조 프로세서 없음)하며, AF-H7E는 STM32F103 IO 보조 프로세서와 이더넷을 갖춘 모듈형 설계입니다. 보드 ID `6201` / `6202` (novaX-ALUX 예약 범위 `6200`–`6209`).
+‡ 중복 IMU를 갖춘 **오토파일럿급** 보드: AF-F7 mini는 PWM 출력을 직접 구동(IO 보조 프로세서 없음)하며, AF-H7E는 STM32F103 IO 보조 프로세서와 이더넷을 갖춘 모듈형 설계입니다.
+
+모든 비행 컨트롤러는 novaX-ALUX 예약 범위 `6200`–`6209` 내의 보드 ID를 사용합니다: AF-H7 nano `6200`, AF-F7 mini `6201`, AF-H7E `6202`, AF-F4 nano `6203` (AF-F4 nano는 이제 SpeedyBee F4 ID 대신 고유한 novaX ID를 사용합니다). AP-RTK dual 주변장치는 DroneCAN OTA 호환을 위해 CUAV ID `1085`를 유지합니다.
 
 ## 저장소 구조
 
@@ -46,12 +48,14 @@ novaX 비행 컨트롤러 및 DroneCAN 주변장치용 보드 정의, 빌드 스
 │   ├── sync_ap_board.sh        # 보드 설정을 AP 소스 트리에 심볼릭 링크
 │   ├── build_ap.sh             # 구성 + 빌드 + 패키징 (ArduPilot)
 │   ├── build_bf.sh             # 빌드 + 패키징 (Betaflight)
-│   └── package_fw.sh           # 펌웨어 산출물을 releases/ 로 수집
+│   ├── package_fw.sh           # 펌웨어 산출물을 releases/ 로 수집
+│   └── release.sh              # GitHub Release 게시 (개별 파일)
+├── VERSION                     # 공유 novaX 펌웨어 버전 (모든 FC 공통)
 ├── releases/                   # 로컬 빌드 출력 (gitignore 처리)
 │   └── <board>/
 │       ├── ardupilot/          # .apj, .hex, bootloader
 │       └── betaflight/         # .hex, .bin
-└── GitHub Releases             # 게시된 펌웨어 zip
+└── GitHub Releases             # 게시된 펌웨어 (보드별 개별 파일)
 ```
 
 ## 시작하기
@@ -105,12 +109,35 @@ ls releases/AP-RTK_dual/ardupilot/
 # AP_Periph.bin  AP_Periph.apj  AP_Periph_with_bl.hex  AP-RTK_dual_bl.bin  ...
 ```
 
+## 펌웨어 버전
+
+모든 비행 컨트롤러는 **하나의** novaX 버전을 공유하며, 저장소 루트의 `VERSION` 파일(예: `0.2.0`)에 정의됩니다. 빌드 시 `build_ap.sh`가 이를 펌웨어에 주입하므로 Mission Planner / QGC에 다음과 같이 표시됩니다:
+
+```
+novaX v0.2.0 (92b0cd78)
+```
+
+상위 ArduPilot 버전은 `fw_string_original`에 별도로 보존되며, git 해시는 끝에 자동으로 추가됩니다. DroneCAN 주변장치(AP_Periph)는 자체 버전 체계를 따르며 공유 FC 버전이 부여되지 않습니다.
+
 ## 릴리스 게시
 
+릴리스는 펌웨어를 **개별 파일**로 게시합니다(zip 없음). 보드마다 한 세트씩 단일 태그 아래에 배치됩니다.
+
 ```bash
-# 모든 보드 펌웨어 zip을 포함한 GitHub Release 생성
-./scripts/release.sh v1.0.0
+# 1. 공유 버전 올리기
+echo 0.2.0 > VERSION
+
+# 2. 각 비행 컨트롤러 빌드(버전은 자동으로 주입됨)
+./scripts/build_ap.sh AF-F4_nano copter
+./scripts/build_ap.sh AF-F7_mini copter
+./scripts/build_ap.sh AF-H7_nano copter
+./scripts/build_ap.sh AF-H7E    copter
+
+# 3. 게시. 태그는 VERSION과 일치해야 합니다(vX.Y.Z). 주변장치는 제외됩니다
+./scripts/release.sh v0.2.0
 ```
+
+저장소 루트에 `GITHUB_ACCESS_TOKEN=<token>`을 포함한 `.env`가 필요합니다(gitignored). `DRY_RUN=1 ./scripts/release.sh v0.2.0`으로 게시하지 않고 미리 볼 수 있습니다.
 
 ## 플래싱
 
