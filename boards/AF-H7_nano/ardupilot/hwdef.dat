@@ -294,3 +294,6 @@ define HAL_WITH_RAMTRON  0
 # =============================================================================
 
 DEFAULT_PARAMETERS libraries/AP_HAL_ChibiOS/hwdef/AF-H7_nano/defaults.parm
+
+# enable software DFU entry (app Util::boot_to_dfu -> bootloader __entry_hook)
+ENABLE_DFU_BOOT 1

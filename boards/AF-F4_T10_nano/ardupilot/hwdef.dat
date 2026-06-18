@@ -163,3 +163,6 @@ define DEFAULT_NTF_LED_TYPES 257
 
 # AF-F4_T10_nano: CADDX gimbal + curated feature set (custom.ardupilot.org Selected Features)
 include AF-F4_T10_features.inc
+
+# enable software DFU entry (app Util::boot_to_dfu -> bootloader __entry_hook)
+ENABLE_DFU_BOOT 1

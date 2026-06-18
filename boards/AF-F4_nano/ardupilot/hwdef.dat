@@ -160,3 +160,6 @@ define HAL_OS_FATFS_IO 1
 include ../include/minimize_fpv_osd.inc
 
 define DEFAULT_NTF_LED_TYPES 257
+
+# enable software DFU entry (app Util::boot_to_dfu -> bootloader __entry_hook)
+ENABLE_DFU_BOOT 1
