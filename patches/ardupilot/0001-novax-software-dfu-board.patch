@@ -1,8 +1,8 @@
 diff --git a/libraries/AP_HAL_ChibiOS/hwdef/common/board.c b/libraries/AP_HAL_ChibiOS/hwdef/common/board.c
-index 618fe597ac..8ddaf6240a 100644
+index 618fe597ac..459cfe9cc0 100644
 --- a/libraries/AP_HAL_ChibiOS/hwdef/common/board.c
 +++ b/libraries/AP_HAL_ChibiOS/hwdef/common/board.c
-@@ -234,6 +234,66 @@ static void stm32_gpio_init(void) {
+@@ -234,6 +234,74 @@ static void stm32_gpio_init(void) {
   * You can rely on: 1) const variables or tables 2) flash code 3) automatic variables
   */
  void __early_init(void) {
@@ -33,6 +33,14 @@ index 618fe597ac..8ddaf6240a 100644
 +      } pd;
 +      stm32_watchdog_load((uint32_t *)&pd, (sizeof(pd)+3)/4);
 +      if (pd.boot_to_dfu) {
++#if defined(STM32F4) || defined(STM32F7)
++          /* __early_init runs before stm32_clock_init, so the PWR clock and backup-domain
++             write-enable (DBP) are not set up yet. Reading RTC backup works, but WRITING
++             (the clear below) silently fails without them — so boot_to_dfu never clears and
++             the board re-enters DFU on every boot (stuck loop). Enable PWR clock + DBP here. */
++          RCC->APB1ENR |= RCC_APB1ENR_PWREN; (void)RCC->APB1ENR;
++          PWR->CR |= PWR_CR_DBP;
++#endif
 +          pd.boot_to_dfu = 0;
 +          stm32_watchdog_save((uint32_t *)&pd, (sizeof(pd)+3)/4);
 +          /* Full deinit before jumping to the ST ROM system bootloader so its USB enumerates.

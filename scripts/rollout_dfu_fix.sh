@@ -8,10 +8,10 @@ ROOT=/home/sk24/flight_controller
 export PATH="$HOME/arm-gcc/gcc-arm-none-eabi-10-2020-q4-major/bin:$PATH"
 cd "$ROOT"
 
-echo "0.2.2" > VERSION
+echo "0.2.3" > VERSION
 echo "VERSION -> $(cat VERSION)"
 
-declare -A VER=( [AF-F4_nano]=0.2.2 [AF-F7_mini]=0.2.2 [AF-H7_nano]=0.2.2 [AF-H7E]=0.2.2 [AF-F4_T10_nano]=0.3.2 )
+declare -A VER=( [AF-F4_nano]=0.2.3 [AF-F7_mini]=0.2.3 [AF-H7_nano]=0.2.3 [AF-H7E]=0.2.3 [AF-F4_T10_nano]=0.3.3 )
 BOARDS=(AF-F4_nano AF-F7_mini AF-H7_nano AF-H7E AF-F4_T10_nano)
 FAIL=()
 for b in "${BOARDS[@]}"; do
