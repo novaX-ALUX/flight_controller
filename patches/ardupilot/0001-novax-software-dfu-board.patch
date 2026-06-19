@@ -1,0 +1,71 @@
+diff --git a/libraries/AP_HAL_ChibiOS/hwdef/common/board.c b/libraries/AP_HAL_ChibiOS/hwdef/common/board.c
+index 618fe597ac..8ddaf6240a 100644
+--- a/libraries/AP_HAL_ChibiOS/hwdef/common/board.c
++++ b/libraries/AP_HAL_ChibiOS/hwdef/common/board.c
+@@ -234,6 +234,66 @@ static void stm32_gpio_init(void) {
+  * You can rely on: 1) const variables or tables 2) flash code 3) automatic variables
+  */
+ void __early_init(void) {
++#if defined(HAL_BOOTLOADER_BUILD) && HAL_ENABLE_DFU_BOOT
++  /* novaX fix: ArduPilot's DFU-boot jump normally lives in AP_HAL_ChibiOS/system.cpp
++     __entry_hook(), which upstream relies on ChibiOS crt0 to call via CRT0_ENTRY_HOOK. This
++     tree's ChibiOS crt0 (commit 88b8460) lacks that hook, and __entry_hook() also can't be
++     resolved across archives at link time (libch.a -> libAP_Bootloader_libs.a back-ref). So
++     the bootloader never honoured the boot_to_dfu flag (MAVLink param4=99 / "Entering DFU
++     mode") and software DFU was impossible. Implement the jump inline here: __early_init runs
++     from crt0 before any other init, the correct early point. Layout mirrors
++     AP_HAL::Util::PersistentData (same compiler/flags, no -fshort-enums => identical layout);
++     we only need the trailing boot_to_dfu flag, persisted in RTC backup block 1. */
++  {
++      struct dfu_persistent_data {
++          float roll_rad, pitch_rad, yaw_rad;
++          int32_t home_lat, home_lon, home_alt_cm;
++          uint32_t fault_addr, fault_icsr, fault_lr, internal_errors;
++          uint16_t internal_error_count, internal_error_last_line;
++          uint32_t spi_count, i2c_count, i2c_isr_count;
++          uint16_t waypoint_num, last_mavlink_msgid, last_mavlink_cmd, semaphore_line, fault_line;
++          uint8_t fault_type, fault_thd_prio;
++          char thread_name4[4];
++          int8_t scheduler_task;
++          uint8_t armed;
++          uint8_t safety_state;   /* enum safety_state : uint8_t (1 byte!) */
++          uint8_t boot_to_dfu;
++      } pd;
++      stm32_watchdog_load((uint32_t *)&pd, (sizeof(pd)+3)/4);
++      if (pd.boot_to_dfu) {
++          pd.boot_to_dfu = 0;
++          stm32_watchdog_save((uint32_t *)&pd, (sizeof(pd)+3)/4);
++          /* Full deinit before jumping to the ST ROM system bootloader so its USB enumerates.
++             A bare MSP+jump leaves IRQs/SysTick/VTOR from the AP bootloader's crt0 in place,
++             which breaks the ROM USB ("device descriptor request failed"). Sequence per the
++             canonical jump-to-system-memory guides (ST community / stm32world). */
++          __disable_irq();
++          SysTick->CTRL = 0; SysTick->LOAD = 0; SysTick->VAL = 0;
++          for (unsigned _i = 0; _i < 8U; _i++) { NVIC->ICER[_i] = 0xFFFFFFFFu; NVIC->ICPR[_i] = 0xFFFFFFFFu; }
++          __enable_irq();
++          /* ST ROM system-bootloader base differs per family (AN2606):
++             F4=0x1FFF0000, F7=0x1FF00000, H7=0x1FF09800. */
++#if defined(STM32H7)
++          const uint32_t _sysmem = 0x1FF09800;
++#elif defined(STM32F7)
++          const uint32_t _sysmem = 0x1FF00000;
++#else
++          const uint32_t _sysmem = 0x1FFF0000;  /* STM32F4 */
++          /* F4: map system flash to 0x00000000 (SYSCFG_MEMRMP MEM_MODE=0b01) */
++          RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN; (void)RCC->APB2ENR;
++          SYSCFG->MEMRMP = (SYSCFG->MEMRMP & ~0x3u) | 0x1u;
++#endif
++          const uint32_t *app_base = (const uint32_t *)_sysmem;
++          SCB->VTOR = _sysmem;
++          __DSB(); __ISB();
++          __set_MSP(app_base[0]);
++          __set_CONTROL(0);
++          __ISB();
++          ((void (*)(void))(app_base[1]))();
++          while (1);
++      }
++  }
++#endif
+ #if !defined(STM32F1)
+   stm32_gpio_init();
+ #endif
