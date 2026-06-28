@@ -164,5 +164,16 @@ define DEFAULT_NTF_LED_TYPES 257
 # AF-F4_T10_nano: CADDX gimbal + curated feature set (custom.ardupilot.org Selected Features)
 include AF-F4_T10_features.inc
 
+# --- SD logging fix ---------------------------------------------------------
+# The auto-generated features.inc (custom.ardupilot.org "Selected Features")
+# wrongly forces AP_FILESYSTEM_FATFS_ENABLED 0, which disables the SD FAT
+# filesystem -> kills dataflash File logging and SD log download. The base hwdef
+# sets HAL_OS_FATFS_IO 1 but the explicit 0 in the include overrides it. Re-enable
+# here (after the include) to restore SD logging. Also enable SD param storage.
+undef AP_FILESYSTEM_FATFS_ENABLED
+define AP_FILESYSTEM_FATFS_ENABLED 1
+undef AP_SDCARD_STORAGE_ENABLED
+define AP_SDCARD_STORAGE_ENABLED 1
+
 # enable software DFU entry (app Util::boot_to_dfu -> bootloader __entry_hook)
 ENABLE_DFU_BOOT 1
