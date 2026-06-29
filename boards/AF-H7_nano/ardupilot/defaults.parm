@@ -33,4 +33,10 @@ CAN_P1_DRIVER 1
 CAN_D1_PROTOCOL 1
 
 # ---- OSD ----
+# OSD_TYPE 1  = onboard AT7456E analog OSD
+# OSD_TYPE2 5 = DJI O3 MSP DisplayPort (SERIAL4)
 OSD_TYPE 1
+OSD_TYPE2 5
+
+# ---- LED strip on PWM11 (PA8) ----
+SERVO11_FUNCTION 120

@@ -36,6 +36,10 @@ PA12 OTG_FS_DP OTG1
 USB_STRING_MANUFACTURER "NovaX"
 USB_STRING_PRODUCT "AF-H7 nano"
 
+# ---- SWD Debug ----
+PA13 JTMS-SWDIO SWD
+PA14 JTCK-SWCLK SWD
+
 # ---- LEDs ----
 # Schematic/Betaflight: LED0 is on PE3, LED1 is on PE4. Both are active-high.
 PE3 LED0 OUTPUT LOW GPIO(90)
@@ -176,7 +180,8 @@ define AP_BARO_SPL06_ENABLED 1
 # =============================================================================
 
 define HAL_PROBE_EXTERNAL_I2C_COMPASSES
-COMPASS IST8310 I2C:0:0x0E true ROTATION_NONE
+define HAL_COMPASS_DISABLE_IST8310_INTERNAL_PROBE
+COMPASS IST8310 I2C:0:0x0E false ROTATION_NONE
 
 # =============================================================================
 # CAN Bus - FDCAN1 with TJA1051TK/3 transceiver
@@ -186,7 +191,7 @@ PD0 CAN1_RX CAN1
 PD1 CAN1_TX CAN1
 
 # TJA1051 SILENT pin (LOW = normal operation)
-PD3 GPIO_CAN1_SILENT OUTPUT PUSHPULL SPEED_LOW LOW
+PD3 GPIO_CAN1_SILENT OUTPUT PUSHPULL SPEED_LOW LOW GPIO(70)
 
 define HAL_NUM_CAN_IFACES 1
 
