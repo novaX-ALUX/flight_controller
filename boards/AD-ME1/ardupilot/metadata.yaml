@@ -1,0 +1,33 @@
+board: AD-ME1
+platform:
+  - ardupilot
+mcu: STM32F405xx
+bootloader_board_id: 6203
+source_tree: firmware/ardupilot
+board_config: boards/AD-ME1/ardupilot
+notes: >-
+  AD-ME1 is a rebrand of the AF-F4_T10_nano build (CADDX gimbal variant of the
+  AF-F4_nano). Same STM32F405 hardware and board_id (6203), so a board running
+  the matching bootloader accepts this firmware over the normal .apj updater.
+  Feature set mirrors the custom.ardupilot.org "Selected Features" build (see
+  ardupilot/AD-ME1_features.inc) plus the CADDX gimbal (HAL_MOUNT_ENABLED +
+  HAL_MOUNT_CADDX_ENABLED).
+sensors:
+  imu: Invensensev3
+  barometer: SPL06
+  gps: MAX-M10S
+  compass: QMC5883P
+gimbal:
+  type: CADDX (MNT_TYPE 13)
+  backend: HAL_MOUNT_CADDX_ENABLED
+ports:
+  serial1: MAX-M10S GPS
+  serial2: RCIN
+  serial3: VTX
+  uart4: ELRS
+  uart5: ESC telemetry
+  serial6: spare (CADDX gimbal recommended)
+i2c:
+  bus1:
+    - QMC5883P
+    - SPL06
