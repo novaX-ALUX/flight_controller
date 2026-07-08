@@ -5,19 +5,28 @@ that are not expressible as hwdef overlays are kept here as patches and re-appli
 fresh checkout / `git submodule update` via `scripts/apply_ap_patches.sh`.
 
 ## Patches
-- **0001-novax-software-dfu-board.patch** — `__early_init()` (bootloader builds with
-  `ENABLE_DFU_BOOT`) reads the `boot_to_dfu` persistent flag and jumps to the ST ROM system
-  bootloader with a full deinit (disable IRQ / SysTick / NVIC clear / SYSCFG remap / VTOR /
-  MSP / CONTROL). Upstream relies on a ChibiOS `CRT0_ENTRY_HOOK` that this pinned ChibiOS
-  lacks, so `__entry_hook()` was never called and software DFU never worked. System-memory
-  base is per-family: F4=0x1FFF0000, F7=0x1FF00000, H7=0x1FF09800.
-- **0002-novax-software-dfu-usb-disconnect.patch** — `Util::boot_to_dfu()` signals a USB
-  disconnect (`usbDisconnectBus`) before the reset so the host re-enumerates the ST ROM DFU
-  device instead of keeping the stale CDC handle.
+- **0001-novax-software-dfu-board.patch** — buttonless software DFU (MAVLink
+  `PREFLIGHT_REBOOT_SHUTDOWN` param4=99, magic 42/24/71 → `Util::boot_to_dfu()`). One
+  consolidated patch, two mechanisms by MCU family:
+  - **F4 / F7 — software jump.** `board.c __early_init()` (bootloader build) reads the
+    `boot_to_dfu` persistent flag and jumps to the ST ROM system bootloader with a full deinit
+    (upstream's `system.cpp __entry_hook()` is dead in this pinned ChibiOS). `Util::boot_to_dfu()`
+    drops USB D+ (`usbDisconnectBus`) before the reset so the host re-enumerates the ROM DFU
+    instead of keeping the stale CDC handle. ROM base: F4=0x1FFF0000, F7=0x1FF00000.
+  - **H7 (AF-H7E / H753) — option-byte cold boot.** `Util::boot_to_dfu()` commits
+    `BOOT_CM7_ADD0=0x1FF00000` (`flash.c stm32_flash_set_boot_address0`, RM0433 both-bank-idle
+    OPTSTART sequence) then `NVIC_SystemReset()` → the ROM cold-boots into USB DFU (0483:DF11).
+    After a DFU flash the ST ROM "leave" is a *jump* to 0x08000000 (not a reset), so
+    `AP_Bootloader.cpp main()` **self-heals**: if `BOOT_CUR==0x1FF0` it restores
+    `BOOT_ADD0=0x08000000` and `NVIC_SystemReset()` → the app cold-boots with clean USB, no
+    power cycle. The F4/F7 `board.c` jump is gated `!defined(STM32H7)` (the H753 jump leaves USB
+    dark), so it never touches the H7 bootloader binary.
 
-## Verified
-- **AF-F4_T10_nano (STM32F405): hardware-verified** — MAVLink `param4=99` → board enumerates
-  as `0483:df11` cleanly.
-- **F7 / H7: built with the fix but NOT hardware-verified** (no boards on hand; they ship
-  buttonless). Bench-test via SWD-flash `_with_bl.hex` then a `param4=99` DFU-entry test
-  before relying on it for field units.
+  (This supersedes the former split 0001 board.c / 0002 usb-disconnect patches, which were the
+  F4-only jump approach; they are consolidated here alongside the H7 BOOT_ADD0 path.)
+
+## Verified (hardware)
+- **AF-F4_T10_nano (STM32F405):** software-jump DFU — `param4=99` → `0483:df11` cleanly.
+- **AF-H7E (STM32H753), 2026-07:** BOOT_ADD0 cold-boot DFU entry + `flash_dfu.py`/WebUSB flash +
+  bootloader self-heal auto-boot (no power cycle). Full round-trip verified on the bench.
+- **F7:** built with the F4/F7 jump path but **not hardware-verified** (no board on hand).
