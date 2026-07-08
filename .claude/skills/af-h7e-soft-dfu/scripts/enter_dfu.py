@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-AF-H7E (novaX, STM32H753) 소프트웨어 DFU 진입.
+AF-H7E (novaX, STM32H753) enter software DFU.
 
-USB MAVLink로 MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN(246)을 매직 시퀀스와 함께 전송한다.
-param4 디버그 핸들러는 반드시 param1=42, param2=24, param3=71 가드 안에 있으므로
-이 값들이 없으면 boot_to_dfu()가 호출조차 되지 않는다.
+Send MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN(246) over USB MAVLink together with the magic sequence.
+The param4 debug handlers all sit behind the param1=42, param2=24, param3=71 guard, so without
+those values boot_to_dfu() is never even called.
 
-성공 시 보드는 리셋되어 0483:df11로 열거되고 앱 COM은 사라진다.
-리셋 순간 pymavlink가 SerialException(장치가 명령을 인식하지 않습니다)을 던지는 것은
-COM이 사라진 것 = 정상/성공 신호다.
+On success the board resets, re-enumerates as 0483:df11 and the app COM disappears. The moment it
+resets, pymavlink throws a SerialException (the COM port went away) — that is the expected success
+signal, not an error.
 
-사용: python enter_dfu.py [COM포트]   (기본 COM63)
-WSL에서는 윈도우 파이썬을 powershell.exe interop로 실행:
-  powershell.exe -NoProfile -Command "& 'C:\\...\\python.exe' enter_dfu.py COM63"
-진입 확인(Windows):
+Usage: python enter_dfu.py [COM_PORT]   (defaults to COM63)
+From WSL, run the Windows Python via powershell.exe interop (the board's USB is on Windows):
+  powershell.exe -NoProfile -Command "& 'C:\\path\\to\\python.exe' enter_dfu.py COM63"
+Confirm entry (Windows):
   Get-CimInstance Win32_PnPEntity -Filter "DeviceID LIKE '%VID_0483&PID_DF11%'"
 """
 from pymavlink import mavutil
@@ -34,7 +34,7 @@ m.mav.command_long_send(
     MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0,
     42.0, 24.0, 71.0, 99.0, 0, 0, 0)
 
-# 보드가 리셋되며 COM이 사라지기 전 잠깐 STATUSTEXT/ACK를 잡아본다(선택).
+# Grab a STATUSTEXT/ACK for a moment before the reset drops the COM port (optional).
 t = time.time()
 try:
     while time.time() - t < 3:
@@ -47,7 +47,7 @@ try:
         else:
             print("ACK cmd=%d result=%d" % (msg.command, msg.result))
 except Exception as e:
-    # 리셋으로 포트가 사라지면 여기로 온다 = DFU 진입 성공 신호
+    # The port vanishing on reset lands here = DFU entry success signal.
     print("port dropped (reset -> DFU expected):", type(e).__name__)
 finally:
     try:
