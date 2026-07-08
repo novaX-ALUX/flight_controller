@@ -10,3 +10,9 @@ boards/*/include
 # Secrets (tokens / credentials) - never commit
 .env
 .env.*
+
+# Tooling state (OMC session/lock)
+.omc/
+
+# Build logs (scratch, never commit)
+*.log
