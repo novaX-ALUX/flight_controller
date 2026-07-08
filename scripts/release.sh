@@ -28,21 +28,26 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TAG="${1:?Usage: release.sh <tag> [board ...]}"
 shift || true
 
-# A GLOBAL version tag (vX.Y.Z) must match the VERSION file -- the single source
-# baked into the firmware at build time -- so the release label matches what GCS
-# reports. Board-scoped tags (e.g. AF-F4_nano-v0.1.4) are left alone. Override
-# with ALLOW_VERSION_MISMATCH=1 for a deliberate re-tag.
-VERSION_FILE="${ROOT_DIR}/VERSION"
-if [[ -f "${VERSION_FILE}" && "${TAG}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    FILE_VERSION="$(tr -d '[:space:]' < "${VERSION_FILE}")"
-    TAG_VERSION="${TAG#v}"
-    if [[ "${TAG_VERSION}" != "${FILE_VERSION}" && "${ALLOW_VERSION_MISMATCH:-0}" != "1" ]]; then
-        echo "Error: tag '${TAG}' does not match VERSION file '${FILE_VERSION}'." >&2
-        echo "       The firmware was built with novaX v${FILE_VERSION}; releasing it as" >&2
-        echo "       '${TAG}' would mislabel it. Fix VERSION (and rebuild) or the tag." >&2
+# A version tag must match the VERSION the firmware was built from, so the
+# release label matches what GCS reports. Each hardware is versioned per-board:
+#   - Board-scoped tag "<board>-vX.Y.Z" is checked against boards/<board>/VERSION
+#   - Global tag       "vX.Y.Z"         is checked against the repo-root VERSION
+# Override with ALLOW_VERSION_MISMATCH=1 for a deliberate re-tag.
+_check_version() {  # <label> <tag_version> <file_version>
+    if [[ "${2}" != "${3}" && "${ALLOW_VERSION_MISMATCH:-0}" != "1" ]]; then
+        echo "Error: tag '${TAG}' (v${2}) does not match ${1} (${3})." >&2
+        echo "       The firmware was built with novaX v${3}; releasing it as" >&2
+        echo "       '${TAG}' would mislabel it. Fix the VERSION file (and rebuild) or the tag." >&2
         echo "       Override with ALLOW_VERSION_MISMATCH=1 if this is intentional." >&2
         exit 1
     fi
+}
+if [[ "${TAG}" =~ ^(.+)-v?([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+    _board="${BASH_REMATCH[1]}"; _tagver="${BASH_REMATCH[2]}"
+    _bvf="${ROOT_DIR}/boards/${_board}/VERSION"
+    [[ -f "${_bvf}" ]] && _check_version "boards/${_board}/VERSION" "${_tagver}" "$(tr -d '[:space:]' < "${_bvf}")"
+elif [[ "${TAG}" =~ ^v?([0-9]+\.[0-9]+\.[0-9]+)$ && -f "${ROOT_DIR}/VERSION" ]]; then
+    _check_version "VERSION file" "${BASH_REMATCH[1]}" "$(tr -d '[:space:]' < "${ROOT_DIR}/VERSION")"
 fi
 
 cd "${ROOT_DIR}"

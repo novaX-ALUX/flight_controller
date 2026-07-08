@@ -37,16 +37,22 @@ if [[ ! -f "${BL_BIN}" ]]; then
 fi
 
 # --- novaX custom firmware version string (shown in GCS) ---------------------
-# Inject AP_CUSTOM_FIRMWARE_STRING through --extra-hwdef so all flight
-# controllers share ONE novaX version without editing each board's hwdef. The
-# upstream ArduPilot version is preserved separately in fw_string_original, and
-# the git hash is auto-appended by AP_FWVersionDefine.h. The version source is
-# the repo-root VERSION file (override with the NOVAX_VERSION env var).
-# Peripherals (AP_Periph, e.g. AP-RTK_dual) are on their own version track and
-# are intentionally NOT stamped here.
+# Inject AP_CUSTOM_FIRMWARE_STRING through --extra-hwdef so each board carries
+# its OWN novaX version without editing its hwdef. Version source order:
+#   1. NOVAX_VERSION env var        (explicit one-off override)
+#   2. boards/<board>/VERSION       (per-board version — the normal case)
+#   3. repo-root VERSION            (fallback default for boards without one)
+#   4. "dev"
+# Each hardware is versioned INDEPENDENTLY (e.g. AF-H7E 0.2.9 while AF-F7_mini
+# 0.2.3): bumping one board never forces a bump on the others. The upstream
+# ArduPilot version is preserved separately in fw_string_original, and the git
+# hash is auto-appended by AP_FWVersionDefine.h. Peripherals (AP_Periph, e.g.
+# AP-RTK_dual) are on their own track and are intentionally NOT stamped here.
 EXTRA_HWDEF_ARGS=()
 if [[ "${VEHICLE}" != "AP_Periph" ]]; then
-    NOVAX_VERSION="${NOVAX_VERSION:-$(cat "${ROOT_DIR}/VERSION" 2>/dev/null || echo dev)}"
+    _BOARD_VERSION_FILE="${ROOT_DIR}/boards/${BOARD_NAME}/VERSION"
+    NOVAX_VERSION="${NOVAX_VERSION:-$(cat "${_BOARD_VERSION_FILE}" 2>/dev/null \
+        || cat "${ROOT_DIR}/VERSION" 2>/dev/null || echo dev)}"
     # Keep the custom string to just the novaX version; ArduPilot auto-appends the
     # git hash -> "novaX v1.0.0 (g1a2b3c4)". The upstream AP version (THISFIRMWARE)
     # is preserved separately in fw_string_original, so it is not repeated here.
