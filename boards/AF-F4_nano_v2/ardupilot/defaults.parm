@@ -1,0 +1,11 @@
+# AF-F4 nano v2 default parameters
+
+# GPS: u-blox MAX-M10S
+GPS1_TYPE 2
+
+# ESC: DShot300 with BLHeli passthrough
+SERVO_BLH_AUTO 1
+MOT_PWM_TYPE 4
+
+# Compass: QMC5883P is external (on the GPS module)
+COMPASS_EXTERNAL 1

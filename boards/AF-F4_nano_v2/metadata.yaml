@@ -1,0 +1,26 @@
+board: AF-F4_nano_v2
+platform:
+  - ardupilot
+mcu: STM32F405xx
+bootloader_board_id: 6204
+source_tree: firmware/ardupilot
+board_config: boards/AF-F4_nano_v2/ardupilot
+sensors:
+  imu: ICM-42688-P
+  barometer: DPS368
+  gps: MAX-M10S
+  compass: QMC5883P
+ports:
+  serial1: MAX-M10S GPS
+  serial2: RCIN
+  serial3: spare
+  serial4: spare
+  serial5: ESC telemetry
+i2c:
+  bus1:
+    - DPS368
+    - QMC5883P
+outputs:
+  motors: 6
+storage:
+  sdcard: SPI3

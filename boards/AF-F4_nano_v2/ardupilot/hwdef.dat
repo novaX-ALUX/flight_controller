@@ -1,0 +1,145 @@
+# hw definition file for processing by chibios_hwdef.py
+# for AF-F4_nano_v2 hardware (novaX AF-F4 nano v2 flight controller)
+
+# MCU class and specific type
+MCU STM32F4xx STM32F405xx
+
+# board ID - distinct novaX ID. Bootloader + app must share this id.
+# AF-F4_nano/AF-F4_T10_nano/AD-ME1 share 6203 because they are the same
+# hardware; this board has a different pin map, so it takes its own id and
+# their firmware cannot be flashed onto it (or vice versa).
+APJ_BOARD_ID 6204
+
+# crystal frequency, setup to use external oscillator
+OSCILLATOR_HZ 8000000
+
+FLASH_SIZE_KB 1024
+
+# bootloader takes first sector
+FLASH_RESERVE_START_KB 48
+
+define HAL_STORAGE_SIZE 16384
+define STORAGE_FLASH_PAGE 1
+
+# TIM4 is free (PB6/PB7 are I2C1) but TIM5 is 32-bit; use it for the system tick
+STM32_ST_USE_TIMER 5
+
+# SPI devices
+
+# SPI1 (IMU)
+PA5 SPI1_SCK SPI1
+PA6 SPI1_MISO SPI1
+PA7 SPI1_MOSI SPI1
+
+# SPI3 (SD Card)
+PB3 SPI3_SCK SPI3
+PB4 SPI3_MISO SPI3
+PB5 SPI3_MOSI SPI3
+
+# Chip select pins
+PC2 GYRO1_CS CS
+PC1 SDCARD1_CS CS
+
+# Beeper
+PC13 BUZZER OUTPUT GPIO(80) LOW
+define HAL_BUZZER_PIN 80
+
+# SERIAL ports
+SERIAL_ORDER OTG1 USART1 USART2 USART3 UART4 UART5
+PA11 OTG_FS_DM OTG1
+PA12 OTG_FS_DP OTG1
+
+# USART1 (onboard MAX-M10S GPS)
+PA9 USART1_TX USART1
+PA10 USART1_RX USART1
+define DEFAULT_SERIAL1_PROTOCOL SerialProtocol_GPS
+define DEFAULT_SERIAL1_BAUD AP_SERIALMANAGER_GPS_BAUD
+
+# USART2 (Receiver SBUS/PPM)
+PA2 USART2_TX USART2
+PA3 USART2_RX USART2
+define DEFAULT_SERIAL2_PROTOCOL SerialProtocol_RCIN
+
+# USART3
+PC10 USART3_TX USART3 NODMA
+PC11 USART3_RX USART3 NODMA
+define DEFAULT_SERIAL3_PROTOCOL SerialProtocol_None
+
+# UART4
+PA0 UART4_TX UART4 NODMA
+PA1 UART4_RX UART4 NODMA
+define DEFAULT_SERIAL4_PROTOCOL SerialProtocol_None
+
+# UART5 (ESC Telemetry)
+PC12 UART5_TX UART5 NODMA
+PD2 UART5_RX UART5 NODMA
+define DEFAULT_SERIAL5_PROTOCOL SerialProtocol_ESCTelemetry
+define DEFAULT_SERIAL5_BAUD 19200
+
+# I2C1 (onboard DPS368 barometer; QMC5883P compass on the GPS module)
+I2C_ORDER I2C1
+PB6 I2C1_SCL I2C1
+PB7 I2C1_SDA I2C1
+
+# ADC ports
+PC5 BATT_VOLTAGE_SENS ADC1 SCALE(1)
+define HAL_BATT_VOLT_PIN 15
+define HAL_BATT_VOLT_SCALE 10.1
+PC4 BATT_CURRENT_SENS ADC1 SCALE(1)
+define HAL_BATT_CURR_PIN 14
+# 184 A sensor; per-unit calibration of BATT_AMP_PERVLT is expected
+define HAL_BATT_CURR_SCALE 17.0
+PB1 RSSI_ADC ADC1
+define BOARD_RSSI_ANA_PIN 9
+define HAL_BATT_MONITOR_DEFAULT 4
+
+# MOTORS (6 outputs)
+PC6 TIM3_CH1 TIM3 PWM(1) GPIO(50)   # M1
+PC7 TIM8_CH2 TIM8 PWM(2) GPIO(51)   # M2
+PC8 TIM8_CH3 TIM8 PWM(3) GPIO(52)   # M3
+PC9 TIM8_CH4 TIM8 PWM(4) GPIO(53)   # M4
+PA15 TIM2_CH1 TIM2 PWM(5) GPIO(54)  # M5
+PA8 TIM1_CH1 TIM1 PWM(6) GPIO(55)   # M6
+
+# Status LED. PA14 is left to SWCLK so SWD stays available for recovery.
+define AP_NOTIFY_GPIO_LED_1_ENABLED 1
+PB9 LED0 OUTPUT LOW GPIO(90)
+define AP_NOTIFY_GPIO_LED_1_PIN 90
+
+# Barometer setup (DPS368 - handled by the DPS280 backend, DPS310 variant
+# selects the temperature-coefficient workaround)
+define AP_BARO_BACKEND_DEFAULT_ENABLED 0
+define AP_BARO_DPS280_ENABLED 1
+BARO DPS310 I2C:0:0x76
+
+# IMU setup (ICM-42688-P)
+SPIDEV imu1   SPI1 DEVID1 GYRO1_CS   MODE3   1*MHZ   8*MHZ
+IMU Invensensev3 SPI:imu1 ROTATION_PITCH_180_YAW_270
+
+# SDCard
+SPIDEV sdcard SPI3 DEVID1 SDCARD1_CS  MODE0 400*KHZ 25*MHZ
+
+# Compass - probe external I2C bus for any supported compass (QMC5883P on the GPS module)
+define ALLOW_ARM_NO_COMPASS
+define HAL_PROBE_EXTERNAL_I2C_COMPASSES
+define HAL_I2C_INTERNAL_MASK 0
+define HAL_COMPASS_AUTO_ROT_DEFAULT 2
+
+define HAL_DEFAULT_INS_FAST_SAMPLE 3
+# Motor order implies Betaflight/X for standard ESCs
+define HAL_FRAME_TYPE_DEFAULT 12
+
+# filesystem setup on sdcard
+define HAL_OS_FATFS_IO 1
+
+# no onboard OSD chip on this board. The MSP DisplayPort backend has to go with it:
+# it is gated on HAL_WITH_MSP_DISPLAYPORT (defaults to HAL_MSP_ENABLED), not on
+# OSD_ENABLED, and it references AP_OSD members that OSD_ENABLED 0 compiles out.
+define OSD_ENABLED 0
+define HAL_WITH_MSP_DISPLAYPORT 0
+
+# minimal drivers to reduce flash usage
+include ../include/minimize_fpv_osd.inc
+
+# enable software DFU entry (app Util::boot_to_dfu -> bootloader __entry_hook)
+ENABLE_DFU_BOOT 1
