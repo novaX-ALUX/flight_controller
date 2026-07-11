@@ -49,6 +49,9 @@ SERIAL_ORDER OTG1 USART1 USART2 USART3 UART4 UART5
 PA11 OTG_FS_DM OTG1
 PA12 OTG_FS_DP OTG1
 
+# USB detection (VUSB via 100k divider)
+PB12 VBUS INPUT OPENDRAIN
+
 # USART1 (onboard MAX-M10S GPS)
 PA9 USART1_TX USART1
 PA10 USART1_RX USART1
@@ -101,10 +104,14 @@ PC9 TIM8_CH4 TIM8 PWM(4) GPIO(53)   # M4
 PA15 TIM2_CH1 TIM2 PWM(5) GPIO(54)  # M5
 PA8 TIM1_CH1 TIM1 PWM(6) GPIO(55)   # M6
 
-# Status LED. PA14 is left to SWCLK so SWD stays available for recovery.
-define AP_NOTIFY_GPIO_LED_1_ENABLED 1
-PB9 LED0 OUTPUT LOW GPIO(90)
-define AP_NOTIFY_GPIO_LED_1_PIN 90
+# Status LEDs (blue PB9, green PA14). PA14 doubles as SWCLK, so driving the
+# green LED gives up SWD in the application. The bootloader keeps SWD (see
+# hwdef-bl.dat) for recovery, and soft DFU / BOOT0 DFU remain as reflash paths.
+define AP_NOTIFY_GPIO_LED_2_ENABLED 1
+PB9 LED_BLUE OUTPUT LOW GPIO(0)
+PA14 LED_GREEN OUTPUT LOW GPIO(1)
+define HAL_GPIO_A_LED_PIN 0
+define HAL_GPIO_B_LED_PIN 1
 
 # Barometer setup (DPS368 - handled by the DPS280 backend, DPS310 variant
 # selects the temperature-coefficient workaround)

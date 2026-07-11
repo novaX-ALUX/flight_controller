@@ -12,11 +12,15 @@ Key hardware mapping:
 - Compass: `QMC5883P` on `I2C1` (external, on the GPS module)
 - SD card: `SPI3`, CS `PC1`
 - Motors: 6 outputs (`PC6`, `PC7`, `PC8`, `PC9`, `PA15`, `PA8`)
+- Status LEDs: blue `PB9`, green `PA14`
+- USB detect: `PB12` (VBUS)
 - No onboard OSD chip
 
 Notes:
 
-- `PA14` is kept as `SWCLK` so SWD recovery stays available; only `PB9` drives the status LED.
+- The green LED shares `PA14` with `SWCLK`, so the application gives up SWD to drive it. The
+  bootloader still maps `PA14` as `SWCLK` (see `hwdef-bl.dat`), so SWD recovery works while the
+  board is in the bootloader; soft DFU and BOOT0 DFU are the other reflash paths.
 - `BATT_AMP_PERVLT` defaults to `17.0` for the 184 A sensor and is expected to be calibrated
   per unit.
 
