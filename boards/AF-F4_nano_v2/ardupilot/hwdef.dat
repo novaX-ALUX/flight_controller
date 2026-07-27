@@ -18,7 +18,7 @@ FLASH_SIZE_KB 1024
 # bootloader takes first sector
 FLASH_RESERVE_START_KB 48
 
-define HAL_STORAGE_SIZE 16384
+define HAL_STORAGE_SIZE 8192
 define STORAGE_FLASH_PAGE 1
 
 # TIM4 is free (PB6/PB7 are I2C1) but TIM5 is 32-bit; use it for the system tick
@@ -45,37 +45,30 @@ PC13 BUZZER OUTPUT GPIO(80) LOW
 define HAL_BUZZER_PIN 80
 
 # SERIAL ports
-SERIAL_ORDER OTG1 USART1 USART2 USART3 UART4 UART5
+SERIAL_ORDER OTG1 USART3 USART1 USART2
 PA11 OTG_FS_DM OTG1
 PA12 OTG_FS_DP OTG1
 
 # USB detection (VUSB via 100k divider)
 PB12 VBUS INPUT OPENDRAIN
 
-# USART1 (onboard MAX-M10S GPS)
-PA9 USART1_TX USART1
+# USART1 (onboard MAX-M10S GPS) = SERIAL2
+PA9 USART1_TX USART1 NODMA
 PA10 USART1_RX USART1
 define DEFAULT_SERIAL1_PROTOCOL SerialProtocol_GPS
 define DEFAULT_SERIAL1_BAUD AP_SERIALMANAGER_GPS_BAUD
 
-# USART2 (Receiver SBUS/PPM)
+# USART2 (SoC companion: MAVLink2@460800 + RC-over-MAVLink) = SERIAL3
 PA2 USART2_TX USART2
 PA3 USART2_RX USART2
-define DEFAULT_SERIAL2_PROTOCOL SerialProtocol_RCIN
 
-# USART3
+# USART3 (CADDX gimbal) = SERIAL1
 PC10 USART3_TX USART3 NODMA
-PC11 USART3_RX USART3 NODMA
+PC11 USART3_RX USART3
 define DEFAULT_SERIAL3_PROTOCOL SerialProtocol_None
 
-# UART4
-PA0 UART4_TX UART4 NODMA
-PA1 UART4_RX UART4 NODMA
 define DEFAULT_SERIAL4_PROTOCOL SerialProtocol_None
 
-# UART5 (ESC Telemetry)
-PC12 UART5_TX UART5 NODMA
-PD2 UART5_RX UART5 NODMA
 define DEFAULT_SERIAL5_PROTOCOL SerialProtocol_ESCTelemetry
 define DEFAULT_SERIAL5_BAUD 19200
 
@@ -102,7 +95,6 @@ PC7 TIM8_CH2 TIM8 PWM(2) GPIO(51)   # M2
 PC8 TIM8_CH3 TIM8 PWM(3) GPIO(52)   # M3
 PC9 TIM8_CH4 TIM8 PWM(4) GPIO(53)   # M4
 PA15 TIM2_CH1 TIM2 PWM(5) GPIO(54)  # M5
-PA8 TIM1_CH1 TIM1 PWM(6) GPIO(55)   # M6
 
 # Status LEDs (blue PB9, green PA14). PA14 doubles as SWCLK, so driving the
 # green LED gives up SWD in the application. The bootloader keeps SWD (see
@@ -147,6 +139,75 @@ define HAL_WITH_MSP_DISPLAYPORT 0
 
 # minimal drivers to reduce flash usage
 include ../include/minimize_fpv_osd.inc
+
+# AF-F4_T10 parity: CADDX gimbal + curated feature set (custom.ardupilot.org Selected Features).
+# nano_v2 was based on AF-F4_T10 but this include was omitted, so it had NO gimbal (AP_Mount) and
+# the full untrimmed feature set (SRAM exhausted to ~16 B). Adding it enables CADDX and frees memory.
+# Keeps DPS280/DPS310 baro (AP_BARO_DPS280_ENABLED 1 inside the include) so this board's baro is intact.
+include AF-F4_T10_features.inc
+
+# --- nano_v2 aggressive trim: match the AF-F4_T10_463_MIN custom (720-param feature set) --------
+# The T10 "Selected Features" include is not trimmed enough for F405 SRAM: with the gimbal enabled
+# SRAM free hits 0 B. Disable the subsystems the custom removed (verified by param diff: custom has
+# 0 of each). These override the features.inc values above (last define wins).
+# --- Full library removal to match the custom AF-F4_T10_463_MIN 720-param set ---
+# Disabling a library's main flag alone breaks the build: the T10 features.inc leaves the backends
+# enabled and each backend inherits a base class that the main flag guards out. So disable the main
+# flag AND every backend the include turned on (this is what custom.ardupilot.org Selected-Features
+# does under the hood). RangeFinder:
+undef AP_RANGEFINDER_ENABLED
+define AP_RANGEFINDER_ENABLED 0
+undef HAL_MSP_RANGEFINDER_ENABLED
+define HAL_MSP_RANGEFINDER_ENABLED 0
+undef AP_RANGEFINDER_BENEWAKE_TF02_ENABLED
+define AP_RANGEFINDER_BENEWAKE_TF02_ENABLED 0
+undef AP_RANGEFINDER_BENEWAKE_TF03_ENABLED
+define AP_RANGEFINDER_BENEWAKE_TF03_ENABLED 0
+undef AP_RANGEFINDER_BENEWAKE_TFMINIPLUS_ENABLED
+define AP_RANGEFINDER_BENEWAKE_TFMINIPLUS_ENABLED 0
+undef AP_RANGEFINDER_BENEWAKE_TFMINI_ENABLED
+define AP_RANGEFINDER_BENEWAKE_TFMINI_ENABLED 0
+undef AP_RANGEFINDER_HC_SR04_ENABLED
+define AP_RANGEFINDER_HC_SR04_ENABLED 0
+undef AP_RANGEFINDER_LIGHTWARE_SERIAL_ENABLED
+define AP_RANGEFINDER_LIGHTWARE_SERIAL_ENABLED 0
+undef AP_RANGEFINDER_MAVLINK_ENABLED
+define AP_RANGEFINDER_MAVLINK_ENABLED 0
+undef AP_RANGEFINDER_PWM_ENABLED
+define AP_RANGEFINDER_PWM_ENABLED 0
+undef AP_RANGEFINDER_VL53L0X_ENABLED
+define AP_RANGEFINDER_VL53L0X_ENABLED 0
+undef AP_RANGEFINDER_VL53L1X_ENABLED
+define AP_RANGEFINDER_VL53L1X_ENABLED 0
+# Camera (backends already off in the include; disable the main flag):
+undef AP_CAMERA_ENABLED
+define AP_CAMERA_ENABLED 0
+# RPM (main + the backends the include turned on):
+undef AP_RPM_ENABLED
+define AP_RPM_ENABLED 0
+undef AP_RPM_ESC_TELEM_ENABLED
+define AP_RPM_ESC_TELEM_ENABLED 0
+undef AP_RPM_HARMONICNOTCH_ENABLED
+define AP_RPM_HARMONICNOTCH_ENABLED 0
+undef AP_RPM_PIN_ENABLED
+define AP_RPM_PIN_ENABLED 0
+# Other cleanly-disableable subsystems:
+undef AP_AVOIDANCE_ENABLED
+define AP_AVOIDANCE_ENABLED 0
+undef MODE_ACRO_ENABLED
+define MODE_ACRO_ENABLED 0
+undef MODE_THROW_ENABLED
+define MODE_THROW_ENABLED 0
+undef AP_TERRAIN_AVAILABLE
+define AP_TERRAIN_AVAILABLE 0
+
+# --- SD logging fix ---------------------------------------------------------
+# The Selected-Features include wrongly forces AP_FILESYSTEM_FATFS_ENABLED 0, which disables the SD
+# FAT filesystem -> kills dataflash File logging and SD download. Re-enable here (after the include).
+undef AP_FILESYSTEM_FATFS_ENABLED
+define AP_FILESYSTEM_FATFS_ENABLED 1
+undef AP_SDCARD_STORAGE_ENABLED
+define AP_SDCARD_STORAGE_ENABLED 1
 
 # enable software DFU entry (app Util::boot_to_dfu -> bootloader __entry_hook)
 ENABLE_DFU_BOOT 1
