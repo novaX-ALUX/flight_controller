@@ -22,6 +22,7 @@ define HAL_STORAGE_SIZE 8192
 
 # 물리 RC 미사용(조종신호=SoC RC-over-MAVLink) → rcin 스레드 제거로 SRAM ~1.4KB 확보. 커스텀 동일.
 define HAL_RCIN_THREAD_ENABLED 0
+
 define STORAGE_FLASH_PAGE 1
 
 # TIM4 is free (PB6/PB7 are I2C1) but TIM5 is 32-bit; use it for the system tick
@@ -203,6 +204,19 @@ undef MODE_THROW_ENABLED
 define MODE_THROW_ENABLED 0
 undef AP_TERRAIN_AVAILABLE
 define AP_TERRAIN_AVAILABLE 0
+
+# OSD 완전 제거. features.inc가 위에서 강제 ON → 여기서 OFF(last-wins). CRSF Telem·MSP DisplayPort가
+# AP_OSD 무조건 참조하므로 함께 OFF (CRSF 미사용=RC over MAVLink).
+undef OSD_ENABLED
+define OSD_ENABLED 0
+undef HAL_WITH_MSP_DISPLAYPORT
+define HAL_WITH_MSP_DISPLAYPORT 0
+undef HAL_CRSF_TELEM_ENABLED
+define HAL_CRSF_TELEM_ENABLED 0
+undef HAL_CRSF_TELEM_TEXT_SELECTION_ENABLED
+define HAL_CRSF_TELEM_TEXT_SELECTION_ENABLED 0
+undef OSD_PARAM_ENABLED
+define OSD_PARAM_ENABLED 0
 
 # --- SD logging fix ---------------------------------------------------------
 # The Selected-Features include wrongly forces AP_FILESYSTEM_FATFS_ENABLED 0, which disables the SD
