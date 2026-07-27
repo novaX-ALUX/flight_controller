@@ -19,6 +19,9 @@ FLASH_SIZE_KB 1024
 FLASH_RESERVE_START_KB 48
 
 define HAL_STORAGE_SIZE 8192
+
+# 물리 RC 미사용(조종신호=SoC RC-over-MAVLink) → rcin 스레드 제거로 SRAM ~1.4KB 확보. 커스텀 동일.
+define HAL_RCIN_THREAD_ENABLED 0
 define STORAGE_FLASH_PAGE 1
 
 # TIM4 is free (PB6/PB7 are I2C1) but TIM5 is 32-bit; use it for the system tick
