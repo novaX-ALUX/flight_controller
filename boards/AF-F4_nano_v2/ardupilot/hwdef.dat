@@ -218,6 +218,13 @@ define HAL_CRSF_TELEM_TEXT_SELECTION_ENABLED 0
 undef OSD_PARAM_ENABLED
 define OSD_PARAM_ENABLED 0
 
+# v1.0.9 기능 활성 (features.inc가 위에서 OFF → 여기서 ON, last-wins)
+# BRAKE 모드: GCS 기본 기능. 드래그퓨전: EKF3 풍속추정(WIND ESTIMATE)에 필수.
+undef MODE_BRAKE_ENABLED
+define MODE_BRAKE_ENABLED 1
+undef EK3_FEATURE_DRAG_FUSION
+define EK3_FEATURE_DRAG_FUSION 1
+
 # --- SD logging fix ---------------------------------------------------------
 # The Selected-Features include wrongly forces AP_FILESYSTEM_FATFS_ENABLED 0, which disables the SD
 # FAT filesystem -> kills dataflash File logging and SD download. Re-enable here (after the include).
