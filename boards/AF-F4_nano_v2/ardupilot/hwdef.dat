@@ -225,6 +225,12 @@ define MODE_BRAKE_ENABLED 1
 undef EK3_FEATURE_DRAG_FUSION
 define EK3_FEATURE_DRAG_FUSION 1
 
+# MAVLink2 서명: 타임스탬프 강제저장 끄기 (30초 주기 저장으로 대체).
+# 이 보드는 FRAM이 없어 스토리지가 플래시 에뮬(STORAGE_FLASH_PAGE)이라, GPS 갱신마다(5~10Hz)
+# 강제저장하면 섹터가 차서 플래시 소거가 발생하고 그동안 MCU 전체가 ~250ms 멈춘다
+# (Storage.cpp: "a sector erase stops the whole MCU") -> GPS 오버런/unhealthy/지연프레임.
+define AP_MAVLINK_SIGNING_FORCE_SAVE_TIMESTAMP 0
+
 # --- SD logging fix ---------------------------------------------------------
 # The Selected-Features include wrongly forces AP_FILESYSTEM_FATFS_ENABLED 0, which disables the SD
 # FAT filesystem -> kills dataflash File logging and SD download. Re-enable here (after the include).

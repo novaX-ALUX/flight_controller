@@ -25,6 +25,24 @@ fresh checkout / `git submodule update` via `scripts/apply_ap_patches.sh`.
   (This supersedes the former split 0001 board.c / 0002 usb-disconnect patches, which were the
   F4-only jump approach; they are consolidated here alongside the H7 BOOT_ADD0 path.)
 
+- **0002-novax-signing-timestamp-throttle.patch** — makes the forced signing-timestamp save
+  opt-out via `AP_MAVLINK_SIGNING_FORCE_SAVE_TIMESTAMP` (`GCS_MAVLink/GCS_Signing.cpp`).
+  **Default stays `1`, i.e. upstream behaviour, so boards that do not define it are untouched.**
+  - *Why:* `AP_GPS` calls `AP::rtc().set_utc_usec()` on every GPS update with a 3D fix (5-10 Hz);
+    each accepted update ran `update_signing_timestamp()` → `save_signing_timestamp(true)` →
+    a 44-byte write into `StorageManager::StorageKeys`. Upstream assumes that storage is FRAM
+    ("structure stored in FRAM"). On a flash-emulated storage board (`STORAGE_FLASH_PAGE`, no
+    FRAM) the sector fills within tens of seconds and the resulting erase "stops the whole MCU"
+    (`AP_HAL_ChibiOS/Storage.cpp`) for ~250 ms, overrunning the UART FIFOs → GPS overruns,
+    "GPS not healthy", delayed frames. Measured on AF-F4_nano_v2: repeated 245-262 ms loops with
+    signing ON, none with signing OFF; `MaxT` 2.57-2.92 ms vs 245+ ms.
+  - *Opt-out:* `AF-F4_nano_v2/hwdef.dat` sets `AP_MAVLINK_SIGNING_FORCE_SAVE_TIMESTAMP 0`, which
+    falls back to the periodic 30 s save (`GCS_Common.cpp` already uses that granularity for the
+    non-forced call site). Signing itself stays fully enabled.
+  - *Not a flight-safety issue by itself:* `Storage::_flash_erase_ok()` only permits an erase while
+    disarmed and `AP_FlashStorage::write()` returns false instead of blocking when an erase is not
+    allowed, so the stall cannot occur in flight — it breaks ground/pre-arm operation.
+
 ## Verified (hardware)
 - **AF-F4_T10_nano (STM32F405):** software-jump DFU — `param4=99` → `0483:df11` cleanly.
 - **AF-H7E (STM32H753), 2026-07:** BOOT_ADD0 cold-boot DFU entry + `flash_dfu.py`/WebUSB flash +
